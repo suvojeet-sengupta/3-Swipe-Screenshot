@@ -31,6 +31,18 @@ if [ "$ACTION" = "stop" ]; then
   exit 0
 fi
 
+# Ensure enabled=1 in config before starting
+CONFIG="$DATA_DIR/config.prop"
+if [ -f "$CONFIG" ]; then
+  if grep -q '^enabled=0' "$CONFIG" 2>/dev/null; then
+    sed -i 's/^enabled=0/enabled=1/' "$CONFIG"
+    echo "[$(date '+%m-%d %H:%M:%S')] Launcher: set enabled=1 in config" >> "$LOG_FILE"
+  fi
+else
+  mkdir -p "$DATA_DIR"
+  echo "enabled=1" > "$CONFIG"
+fi
+
 # Launch daemon fully detached using multiple methods
 echo "[$(date '+%m-%d %H:%M:%S')] Launcher: starting daemon..." >> "$LOG_FILE"
 

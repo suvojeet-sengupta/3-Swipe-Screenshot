@@ -230,8 +230,8 @@ logc "========================================="
 
 # wait until enabled
 while [ "$ENABLED" != "1" ]; do
-  logd "Waiting for enable..."
-  sleep 5
+  logc "Waiting for enable..."
+  sleep 2
   load_config
 done
 

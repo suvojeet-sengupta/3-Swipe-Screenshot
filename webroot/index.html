@@ -514,7 +514,7 @@
     <div style="padding:20px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <h2 style="font-size:18px;">Daemon Logs</h2>
-        <button onclick="closeLogs()"
+        <button onclick="document.getElementById('logModal').style.display='none'"
           style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;">
           ✕ Close
         </button>
@@ -641,6 +641,9 @@
     async function restartDaemon() {
       loading(true);
       try {
+        await saveSetting('enabled', '1');
+        document.getElementById('toggleEnabled').checked = true;
+        updateBanner(true);
         await exec('sh "' + LAUNCH + '" restart');
         toast('Daemon restarted');
         setTimeout(checkDaemon, 3000);
@@ -660,36 +663,13 @@
       } finally { loading(false); }
     }
 
-    let logPollTimer;
-
-    async function refreshLogs() {
-      const r = await exec('tail -n 200 "' + LOG + '" 2>/dev/null || echo "No logs found"');
-      const el = document.getElementById('logContent');
-      const isScrolledToBottom = el.scrollHeight - el.clientHeight <= el.scrollTop + 20;
-      el.textContent = r.out || 'No log data available';
-      if (isScrolledToBottom) {
-        el.scrollTop = el.scrollHeight;
-      }
-    }
-
     async function viewLogs() {
       loading(true);
       try {
-        await refreshLogs();
+        const r = await exec('tail -n 150 "' + LOG + '" 2>/dev/null || echo "No logs found"');
+        document.getElementById('logContent').textContent = r.out || 'No log data available';
         document.getElementById('logModal').style.display = 'block';
-        
-        // Auto-scroll to bottom on first open
-        const el = document.getElementById('logContent');
-        el.scrollTop = el.scrollHeight;
-
-        clearInterval(logPollTimer);
-        logPollTimer = setInterval(refreshLogs, 1500); // Real-time update every 1.5s
       } finally { loading(false); }
-    }
-
-    function closeLogs() {
-      document.getElementById('logModal').style.display = 'none';
-      clearInterval(logPollTimer);
     }
 
     async function clearLogs() {
