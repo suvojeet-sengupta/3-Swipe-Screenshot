@@ -38,13 +38,11 @@
       background: linear-gradient(135deg, var(--bg-secondary) 0%, #1e1e35 100%);
       padding: 28px 20px 24px;
       border-bottom: 1px solid var(--border);
-      position: relative;
-      overflow: hidden;
+      position: relative; overflow: hidden;
     }
     .header::before {
       content: '';
-      position: absolute;
-      top: -50%; right: -20%;
+      position: absolute; top: -50%; right: -20%;
       width: 300px; height: 300px;
       background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
       pointer-events: none;
@@ -210,6 +208,42 @@
     .info-key { color: var(--text-secondary); }
     .info-value { color: var(--text-primary); font-weight: 500; }
 
+    /* ── How It Works ──────────────────── */
+    .how-it-works {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 18px;
+    }
+    .how-step {
+      display: flex; gap: 14px; padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .how-step:last-child { border-bottom: none; }
+    .step-num {
+      width: 28px; height: 28px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), #5a4ed4);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: white;
+    }
+    .step-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .step-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .method-tag {
+      display: inline-block;
+      padding: 2px 8px; border-radius: 6px;
+      font-size: 10px; font-weight: 600;
+      margin-top: 4px;
+    }
+    .method-tag.native {
+      background: rgba(61, 214, 140, 0.15); color: var(--success);
+      border: 1px solid rgba(61, 214, 140, 0.2);
+    }
+    .method-tag.fallback {
+      background: rgba(255, 184, 77, 0.15); color: var(--warning);
+      border: 1px solid rgba(255, 184, 77, 0.2);
+    }
+
     /* ── Toast ──────────────────────────── */
     .toast {
       position: fixed; bottom: 80px; left: 50%;
@@ -282,10 +316,10 @@
         <div class="header-icon">📸</div>
         <div>
           <h1>3-Finger Screenshot</h1>
-          <div class="subtitle">Swipe gesture screenshot module</div>
+          <div class="subtitle">Native system screenshot via gesture</div>
         </div>
       </div>
-      <span class="version-badge">v2.6.0 • Suvojeet Sengupta</span>
+      <span class="version-badge">v2.7.0 • Suvojeet Sengupta</span>
     </div>
   </div>
 
@@ -294,7 +328,7 @@
     <div class="status-dot"></div>
     <div class="status-text">
       <h3 id="statusTitle">Module Active</h3>
-      <p id="statusDesc">3-finger swipe screenshot is enabled</p>
+      <p id="statusDesc">Listening for 3-finger swipe gestures</p>
     </div>
   </div>
 
@@ -321,7 +355,7 @@
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-label">Enable 3-Finger Screenshot</div>
-            <div class="setting-desc">Activate gesture detection daemon</div>
+            <div class="setting-desc">Start or stop the gesture detection daemon</div>
           </div>
           <label class="toggle">
             <input type="checkbox" id="toggleEnabled" checked onchange="toggleFeature(this.checked)">
@@ -338,7 +372,7 @@
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-label">Swipe Direction</div>
-            <div class="setting-desc">Direction of 3-finger swipe</div>
+            <div class="setting-desc">Which direction to swipe with 3 fingers</div>
           </div>
           <select class="setting-select" id="swipeDirection" onchange="saveSetting('swipe_direction', this.value)">
             <option value="down">Down ↓</option>
@@ -348,7 +382,7 @@
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-label">Sensitivity</div>
-            <div class="setting-desc">Lower = more sensitive</div>
+            <div class="setting-desc">How far fingers must move to trigger (lower = easier)</div>
           </div>
           <div class="range-container">
             <input type="range" id="sensitivity" min="100" max="800" step="50" value="300"
@@ -358,74 +392,8 @@
         </div>
         <div class="setting-row">
           <div class="setting-info">
-            <div class="setting-label">Screenshot Delay</div>
-            <div class="setting-desc">Delay before capture (ms)</div>
-          </div>
-          <div class="range-container">
-            <input type="range" id="screenshotDelay" min="0" max="2000" step="100" value="0"
-              oninput="updateRange('screenshotDelay','delayVal','ms'); saveSetting('screenshot_delay',this.value)">
-            <span class="range-value" id="delayVal">0ms</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Feedback -->
-    <div class="section">
-      <div class="section-title">Feedback</div>
-      <div class="card">
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Vibration</div>
-            <div class="setting-desc">Haptic feedback on screenshot</div>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="toggleVibration" checked onchange="saveSetting('vibration',this.checked?'1':'0')">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Vibration Duration</div>
-            <div class="setting-desc">Haptic feedback length</div>
-          </div>
-          <div class="range-container">
-            <input type="range" id="vibDuration" min="10" max="200" step="10" value="50"
-              oninput="updateRange('vibDuration','vibVal','ms'); saveSetting('vibration_duration',this.value)">
-            <span class="range-value" id="vibVal">50ms</span>
-          </div>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Notification</div>
-            <div class="setting-desc">Show notification after capture</div>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="toggleNotification" checked onchange="saveSetting('show_notification',this.checked?'1':'0')">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <!-- Screenshot -->
-    <div class="section">
-      <div class="section-title">Screenshot</div>
-      <div class="card">
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Format</div>
-            <div class="setting-desc">Image file format</div>
-          </div>
-          <select class="setting-select" id="screenshotFormat" onchange="saveSetting('screenshot_format',this.value)">
-            <option value="png">PNG</option>
-            <option value="jpg">JPG</option>
-          </select>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info">
             <div class="setting-label">Cooldown</div>
-            <div class="setting-desc">Seconds between screenshots</div>
+            <div class="setting-desc">Minimum gap between screenshots to prevent double-triggers</div>
           </div>
           <div class="range-container">
             <input type="range" id="cooldown" min="1" max="10" step="1" value="2"
@@ -433,17 +401,77 @@
             <span class="range-value" id="cooldownVal">2s</span>
           </div>
         </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Vibration Feedback</div>
+            <div class="setting-desc">Vibrate when screenshot is taken (fallback mode only)</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggleVibration" checked onchange="saveSetting('vibration',this.checked?'1':'0')">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </div>
     </div>
 
-    <!-- Advanced -->
+    <!-- How It Works -->
     <div class="section">
-      <div class="section-title">Advanced</div>
+      <div class="section-title">How It Works</div>
+      <div class="how-it-works">
+        <div class="how-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Touch Detection</div>
+            <div class="step-desc">A lightweight daemon reads raw touch events from your screen's input device via <b>getevent</b>. It tracks each finger's position in real-time with zero battery drain when idle.</div>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">Gesture Recognition</div>
+            <div class="step-desc">When 3+ fingers are detected swiping in the configured direction past the sensitivity threshold, a screenshot is triggered. A cooldown timer prevents accidental double-fires.</div>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">Native System Screenshot</div>
+            <div class="step-desc">Triggers Android's built-in screenshot — you get the same animation, sound, notification, and share options as pressing <b>Power + Volume Down</b>. Exactly like LineageOS or stock Android.</div>
+            <span class="method-tag native">NATIVE</span>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="step-num">⚡</div>
+          <div class="step-content">
+            <div class="step-title">Automatic Fallback</div>
+            <div class="step-desc">If native screenshot isn't available on your ROM, the module automatically falls back to <b>screencap</b> — saves the image, registers it in Gallery, and shows a notification.</div>
+            <span class="method-tag fallback">FALLBACK</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="section">
+      <div class="section-title">Actions</div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="restartDaemon()">🔄 Restart</button>
+        <button class="btn btn-secondary" onclick="testScreenshot()">📸 Test</button>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-success" onclick="viewLogs()">📋 Logs</button>
+        <button class="btn btn-danger" onclick="clearLogs()">🗑️ Clear</button>
+      </div>
+    </div>
+
+    <!-- Troubleshooting -->
+    <div class="section">
+      <div class="section-title">Troubleshooting</div>
       <div class="card">
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-label">Debug Logging</div>
-            <div class="setting-desc">Log daemon activity to file</div>
+            <div class="setting-desc">Record detailed events for troubleshooting — enable before reporting issues</div>
           </div>
           <label class="toggle">
             <input type="checkbox" id="toggleDebug" onchange="saveSetting('debug_log',this.checked?'1':'0')">
@@ -453,35 +481,24 @@
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="section">
-      <div class="section-title">Actions</div>
-      <div class="btn-group">
-        <button class="btn btn-primary" onclick="restartDaemon()">🔄 Restart Daemon</button>
-        <button class="btn btn-secondary" onclick="testScreenshot()">📸 Test Shot</button>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-success" onclick="viewLogs()">📋 View Logs</button>
-        <button class="btn btn-danger" onclick="clearLogs()">🗑️ Clear Logs</button>
-      </div>
-    </div>
-
     <!-- Module Info -->
     <div class="section">
       <div class="section-title">Module Info</div>
       <div class="info-card">
         <div class="info-row"><span class="info-key">Module</span><span class="info-value">3-Finger Swipe Screenshot</span></div>
-        <div class="info-row"><span class="info-key">Version</span><span class="info-value">v2.6.0</span></div>
+        <div class="info-row"><span class="info-key">Version</span><span class="info-value">v2.7.0</span></div>
         <div class="info-row"><span class="info-key">Developer</span><span class="info-value" style="color:var(--accent-light)">Suvojeet Sengupta</span></div>
-        <div class="info-row"><span class="info-key">Compatibility</span><span class="info-value">Android 11-16+</span></div>
-        <div class="info-row"><span class="info-key">Daemon Status</span><span class="info-value" id="daemonStatus">Checking...</span></div>
-        <div class="info-row"><span class="info-key">Daemon PID</span><span class="info-value" id="daemonPid">—</span></div>
+        <div class="info-row"><span class="info-key">Android</span><span class="info-value">11 – 16+</span></div>
+        <div class="info-row"><span class="info-key">Root</span><span class="info-value">Magisk / KernelSU</span></div>
+        <div class="info-row"><span class="info-key">Daemon</span><span class="info-value" id="daemonStatus">Checking...</span></div>
+        <div class="info-row"><span class="info-key">PID</span><span class="info-value" id="daemonPid">—</span></div>
+        <div class="info-row"><span class="info-key">Screenshot Method</span><span class="info-value" id="ssMethod">Detecting...</span></div>
       </div>
     </div>
 
     <div class="footer">
       Made with ❤️ by <span class="dev-name">Suvojeet Sengupta</span><br>
-      3-Finger Swipe Screenshot Module v2.6.0<br>
+      3-Finger Swipe Screenshot Module v2.7.0<br>
       Compatible with Magisk &amp; KernelSU
     </div>
   </div>
@@ -510,13 +527,13 @@
     /* ══════════════════════════════════════════════════════════════════════════
      *  PATHS
      * ═════════════════════════════════════════════════════════════════════════ */
-    const CFG  = '/data/adb/3swipe/config.prop';
-    const PID  = '/data/adb/3swipe/daemon.pid';
-    const LOG  = '/data/adb/3swipe/daemon.log';
-    const DAEMON = '/data/adb/modules/three_swipe_screenshot/common/3swipe_daemon.sh';
+    const CFG    = '/data/adb/3swipe/config.prop';
+    const PID    = '/data/adb/3swipe/daemon.pid';
+    const LOG    = '/data/adb/3swipe/daemon.log';
+    const LAUNCH = '/data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh';
 
     /* ══════════════════════════════════════════════════════════════════════════
-     *  SHELL EXEC  — KernelSU Promise-based API with timeout safety
+     *  SHELL EXEC — KernelSU Promise-based API with timeout safety
      * ═════════════════════════════════════════════════════════════════════════ */
     function withTimeout(promise, ms) {
       return Promise.race([
@@ -527,12 +544,10 @@
 
     async function exec(cmd) {
       try {
-        // KernelSU v0.7+ WebUI injects `ksu` object
         if (typeof ksu !== 'undefined' && typeof ksu.exec === 'function') {
           const r = await withTimeout(ksu.exec(cmd), 15000);
           return { out: r.stdout || '', err: r.stderr || '', code: r.errno || 0 };
         }
-        // Fallback: kernelsu global
         if (typeof kernelsu !== 'undefined' && typeof kernelsu.exec === 'function') {
           const r = await withTimeout(kernelsu.exec(cmd), 15000);
           return { out: r.stdout || r.output || '', err: r.stderr || '', code: r.errno || 0 };
@@ -560,7 +575,6 @@
       const el = document.getElementById('loadingOverlay');
       if (on) {
         el.classList.add('show');
-        // safety: auto-hide after 10 s so user is never stuck
         loadingTimer = setTimeout(() => { el.classList.remove('show'); toast('Operation timed out'); }, 10000);
       } else {
         el.classList.remove('show');
@@ -604,7 +618,7 @@
       b.className = 'status-banner ' + (active ? 'active' : 'inactive');
       document.getElementById('statusTitle').textContent = active ? 'Module Active' : 'Module Disabled';
       document.getElementById('statusDesc').textContent  = active
-        ? '3-finger swipe screenshot is enabled'
+        ? 'Listening for 3-finger swipe gestures'
         : 'Gesture detection is turned off';
     }
 
@@ -614,11 +628,11 @@
         await saveSetting('enabled', on ? '1' : '0');
         updateBanner(on);
         if (on) {
-          await exec('sh /data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh restart');
-          toast('Module enabled — daemon started');
+          await exec('sh "' + LAUNCH + '" restart');
+          toast('Enabled — daemon started');
         } else {
-          await exec('sh /data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh stop');
-          toast('Module disabled');
+          await exec('sh "' + LAUNCH + '" stop');
+          toast('Disabled — daemon stopped');
         }
         setTimeout(checkDaemon, 2000);
       } finally { loading(false); }
@@ -627,7 +641,7 @@
     async function restartDaemon() {
       loading(true);
       try {
-        await exec('sh /data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh restart');
+        await exec('sh "' + LAUNCH + '" restart');
         toast('Daemon restarted');
         setTimeout(checkDaemon, 3000);
       } finally { loading(false); }
@@ -636,8 +650,13 @@
     async function testScreenshot() {
       loading(true);
       try {
-        await exec('input keyevent 120');
-        toast('Screenshot taken!');
+        // Use shell user (UID 2000) to avoid root binder failures on Android 14+
+        const r = await exec('su 2000 -c "input keyevent 120" 2>&1');
+        const out = (r.out || '') + (r.err || '');
+        if (out.toLowerCase().indexOf('failure') >= 0 || out.toLowerCase().indexOf('error') >= 0) {
+          await exec('input keyevent 120');
+        }
+        toast('Screenshot triggered!');
       } finally { loading(false); }
     }
 
@@ -660,10 +679,9 @@
         const pidR = await exec('cat ' + PID + ' 2>/dev/null');
         const pid = (pidR.out || '').trim().replace(/[^0-9]/g, '');
         const pidEl = document.getElementById('daemonPid');
-        const stEl = document.getElementById('daemonStatus');
+        const stEl  = document.getElementById('daemonStatus');
 
         if (pid && pid.length > 0) {
-          // Use /proc/PID check — more reliable than kill -0
           const chk = await exec('if [ -d /proc/' + pid + ' ]; then echo RUNNING; else echo STOPPED; fi');
           const alive = (chk.out || '').indexOf('RUNNING') >= 0;
           pidEl.textContent = pid;
@@ -680,6 +698,35 @@
       }
     }
 
+    /* ── Detect which screenshot method works on this device ──────────────── */
+    async function detectMethod() {
+      const el = document.getElementById('ssMethod');
+      const r = await exec('grep -o "screenshot triggered.*" "' + LOG + '" 2>/dev/null | tail -1');
+      const line = (r.out || '').trim();
+      if (line.indexOf('shell user') >= 0) {
+        el.textContent = 'Native (shell)';
+        el.style.color = 'var(--success)';
+      } else if (line.indexOf('secontext') >= 0) {
+        el.textContent = 'Native (SELinux)';
+        el.style.color = 'var(--success)';
+      } else if (line.indexOf('root') >= 0) {
+        el.textContent = 'Native (root)';
+        el.style.color = 'var(--success)';
+      } else if (line.indexOf('nsenter') >= 0) {
+        el.textContent = 'Native (nsenter)';
+        el.style.color = 'var(--success)';
+      } else {
+        const f = await exec('grep -c "falling back to screencap" "' + LOG + '" 2>/dev/null');
+        if (parseInt(f.out) > 0) {
+          el.textContent = 'Screencap (fallback)';
+          el.style.color = 'var(--warning)';
+        } else {
+          el.textContent = 'Not yet detected';
+          el.style.color = 'var(--text-secondary)';
+        }
+      }
+    }
+
     /* ══════════════════════════════════════════════════════════════════════════
      *  INIT — apply saved config to UI
      * ═════════════════════════════════════════════════════════════════════════ */
@@ -691,16 +738,19 @@
       updateBanner(on);
 
       if (c.swipe_direction) document.getElementById('swipeDirection').value = c.swipe_direction;
-      if (c.swipe_threshold) { document.getElementById('sensitivity').value = c.swipe_threshold; document.getElementById('sensitivityVal').textContent = c.swipe_threshold + 'px'; }
-      if (c.screenshot_delay) { document.getElementById('screenshotDelay').value = c.screenshot_delay; document.getElementById('delayVal').textContent = c.screenshot_delay + 'ms'; }
+      if (c.swipe_threshold) {
+        document.getElementById('sensitivity').value = c.swipe_threshold;
+        document.getElementById('sensitivityVal').textContent = c.swipe_threshold + 'px';
+      }
+      if (c.cooldown) {
+        document.getElementById('cooldown').value = c.cooldown;
+        document.getElementById('cooldownVal').textContent = c.cooldown + 's';
+      }
       document.getElementById('toggleVibration').checked = c.vibration !== '0';
-      if (c.vibration_duration) { document.getElementById('vibDuration').value = c.vibration_duration; document.getElementById('vibVal').textContent = c.vibration_duration + 'ms'; }
-      document.getElementById('toggleNotification').checked = c.show_notification !== '0';
-      if (c.screenshot_format) document.getElementById('screenshotFormat').value = c.screenshot_format;
-      if (c.cooldown) { document.getElementById('cooldown').value = c.cooldown; document.getElementById('cooldownVal').textContent = c.cooldown + 's'; }
       document.getElementById('toggleDebug').checked = c.debug_log === '1';
 
       checkDaemon();
+      detectMethod();
       setInterval(checkDaemon, 15000);
     }
 

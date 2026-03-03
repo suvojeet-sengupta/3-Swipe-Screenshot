@@ -1,6 +1,6 @@
 #!/system/bin/sh
 ###############################################################################
-#  3-Finger Swipe Screenshot Daemon  v2.6
+#  3-Finger Swipe Screenshot Daemon  v2.7
 #  Developer: Suvojeet Sengupta
 #
 #  Monitors touchscreen input via getevent and detects 3-finger swipe
@@ -90,7 +90,10 @@ find_touch_device() {
 # ── Vibrate ──────────────────────────────────────────────────────────────────
 do_vibrate() {
   [ "$VIBRATION" != "1" ] && return
+  # Try as shell user first (avoids root binder restrictions on Android 14+)
+  su 2000 -c "cmd vibrator_manager vibrate -d 0 -f $VIBRATION_DURATION oneshot" 2>/dev/null && return
   cmd vibrator_manager vibrate -d 0 -f "$VIBRATION_DURATION" oneshot 2>/dev/null && return
+  su 2000 -c "service call vibrator 2 i32 $VIBRATION_DURATION" 2>/dev/null && return
   service call vibrator 2 i32 "$VIBRATION_DURATION" 2>/dev/null
 }
 
@@ -111,6 +114,16 @@ check_cooldown() {
 }
 
 # ── Take screenshot ──────────────────────────────────────────────────────────
+#  Tries multiple methods to trigger the NATIVE system screenshot so Android
+#  handles the screenshot animation, notification, sound, and gallery entry
+#  exactly like pressing Power+VolumeDown.  Falls back to screencap only if
+#  every native method fails.
+#
+#  Root cause of binder failures: the daemon runs as UID 0 (root) and many
+#  Android 14+ services reject binder transactions from root.  Running via
+#  `su 2000` (Magisk) re-executes the command as the shell user (UID 2000),
+#  which is the same identity ADB uses — fixing the "Failed transaction" errors.
+# ─────────────────────────────────────────────────────────────────────────────
 take_screenshot() {
   # Double-fire guard: check file-based cooldown
   if ! check_cooldown; then
@@ -127,32 +140,62 @@ take_screenshot() {
   # Brief pause to let fingers lift off screen
   sleep 0.4
 
-  # Method 1: system screenshot via KEYCODE_SYSRQ (120)
-  # Handles notification, sound, gallery, and screenshot animation automatically
-  if input keyevent 120 2>/dev/null; then
-    logc "Screenshot triggered (system keyevent 120)"
-  else
-    # Method 2: fallback to screencap
-    logc "keyevent 120 failed, falling back to screencap"
-    mkdir -p "$SAVE_DIRECTORY" 2>/dev/null
-    fname="Screenshot_3swipe_$(date +%Y%m%d_%H%M%S).png"
-    fpath="${SAVE_DIRECTORY}/${fname}"
-    screencap -p "$fpath" 2>/dev/null
-    if [ -f "$fpath" ]; then
-      chmod 0644 "$fpath"
-      logc "Saved: $fpath"
-      # Trigger media scan so it appears in gallery
-      am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
-        -d "file://${fpath}" --user 0 >/dev/null 2>&1
-      # Try to show notification
-      cmd notification post -S bigtext -t "Screenshot Captured" \
-        "3swipe_ss" "Saved to Screenshots" 2>/dev/null
-    else
-      logc "ERROR: screencap also failed for $fpath"
+  # ── Method 1: KEYCODE_SYSRQ (120) as shell user ────────────────────────
+  # Best compatibility — same as ADB "input keyevent 120"
+  _err=$(su 2000 -c "input keyevent 120" 2>&1)
+  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
+    logc "System screenshot triggered (keyevent 120 — shell user)"
+    return
+  fi
+  logd "Method 1 (shell user keyevent 120): $_err"
+
+  # ── Method 2: keyevent 120 with explicit SELinux context ───────────────
+  _err=$(su 2000 -z u:r:shell:s0 -c "input keyevent 120" 2>&1)
+  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
+    logc "System screenshot triggered (keyevent 120 — shell+secontext)"
+    return
+  fi
+  logd "Method 2 (shell+secontext keyevent 120): $_err"
+
+  # ── Method 3: keyevent 120 as root (works on older Android / some ROMs) ─
+  _err=$(input keyevent 120 2>&1)
+  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
+    logc "System screenshot triggered (keyevent 120 — root)"
+    return
+  fi
+  logd "Method 3 (root keyevent 120): $_err"
+
+  # ── Method 4: enter zygote namespace and retry ─────────────────────────
+  _zpid=$(pidof zygote64 2>/dev/null || pidof zygote 2>/dev/null)
+  if [ -n "$_zpid" ]; then
+    _err=$(nsenter --target "$_zpid" --mount -- /system/bin/sh -c "input keyevent 120" 2>&1)
+    if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
+      logc "System screenshot triggered (nsenter + keyevent 120)"
+      return
     fi
+    logd "Method 4 (nsenter keyevent 120): $_err"
   fi
 
-  # Vibration feedback
+  # ── Fallback: screencap (no native animation / notification) ────────────
+  logc "All native methods failed — falling back to screencap"
+  mkdir -p "$SAVE_DIRECTORY" 2>/dev/null
+  fname="Screenshot_3swipe_$(date +%Y%m%d_%H%M%S).png"
+  fpath="${SAVE_DIRECTORY}/${fname}"
+  screencap -p "$fpath" 2>/dev/null
+  if [ -f "$fpath" ]; then
+    chmod 0644 "$fpath"
+    logc "Saved: $fpath"
+    # Register with media scanner so the file shows in Gallery
+    am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
+      -d "file://${fpath}" --user 0 >/dev/null 2>&1
+    # Try notification as shell user first, then root
+    su 2000 -c "cmd notification post -S bigtext -t 'Screenshot Captured' '3swipe_ss' 'Saved to Screenshots'" 2>/dev/null \
+      || cmd notification post -S bigtext -t "Screenshot Captured" "3swipe_ss" "Saved to Screenshots" 2>/dev/null
+  else
+    logc "ERROR: screencap also failed for $fpath"
+  fi
+
+  # Vibration feedback (only needed for screencap — native methods vibrate on their own)
   do_vibrate
 }
 
