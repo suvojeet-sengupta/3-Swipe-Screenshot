@@ -1,6 +1,6 @@
 #!/system/bin/sh
 ###############################################################################
-#  3-Finger Swipe Screenshot Daemon  v2.2
+#  3-Finger Swipe Screenshot Daemon  v2.5
 #  Developer: Suvojeet Sengupta
 #
 #  Monitors touchscreen input via getevent and detects 3-finger swipe
@@ -102,25 +102,16 @@ take_screenshot() {
     sleep "$(awk "BEGIN{printf \"%.2f\",$SCREENSHOT_DELAY/1000}")" 2>/dev/null
   fi
 
-  mkdir -p "$SAVE_DIRECTORY" 2>/dev/null
-  fname="Screenshot_3swipe_$(date +%Y%m%d_%H%M%S).png"
-  fpath="${SAVE_DIRECTORY}/${fname}"
+  # Brief pause to let fingers lift off screen
+  sleep 0.3
 
-  screencap -p "$fpath" 2>/dev/null
+  # Primary method: system screenshot via KEYCODE_SYSRQ
+  # This automatically handles notification, sound, gallery, and animation
+  input keyevent 120 2>/dev/null
+  logc "Screenshot triggered (system keyevent 120)"
 
-  if [ -f "$fpath" ]; then
-    chmod 0644 "$fpath"
-    logc "Saved: $fpath"
-    am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
-      -d "file://${fpath}" --user 0 >/dev/null 2>&1 &
-    do_vibrate &
-    if [ "$SHOW_NOTIFICATION" = "1" ]; then
-      cmd notification post -S bigtext -t "Screenshot Captured" \
-        "3swipe_ss" "Saved: $fname" 2>/dev/null &
-    fi
-  else
-    logc "ERROR: screencap failed for $fpath"
-  fi
+  # Extra vibration feedback
+  do_vibrate &
 }
 
 # ── Kill previous instance ───────────────────────────────────────────────────

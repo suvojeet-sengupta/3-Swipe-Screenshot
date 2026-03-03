@@ -285,7 +285,7 @@
           <div class="subtitle">Swipe gesture screenshot module</div>
         </div>
       </div>
-      <span class="version-badge">v2.1.0 • Suvojeet Sengupta</span>
+      <span class="version-badge">v2.5.0 • Suvojeet Sengupta</span>
     </div>
   </div>
 
@@ -471,7 +471,7 @@
       <div class="section-title">Module Info</div>
       <div class="info-card">
         <div class="info-row"><span class="info-key">Module</span><span class="info-value">3-Finger Swipe Screenshot</span></div>
-        <div class="info-row"><span class="info-key">Version</span><span class="info-value">v2.1.0</span></div>
+        <div class="info-row"><span class="info-key">Version</span><span class="info-value">v2.5.0</span></div>
         <div class="info-row"><span class="info-key">Developer</span><span class="info-value" style="color:var(--accent-light)">Suvojeet Sengupta</span></div>
         <div class="info-row"><span class="info-key">Compatibility</span><span class="info-value">Android 11-16+</span></div>
         <div class="info-row"><span class="info-key">Daemon Status</span><span class="info-value" id="daemonStatus">Checking...</span></div>
@@ -481,7 +481,7 @@
 
     <div class="footer">
       Made with ❤️ by <span class="dev-name">Suvojeet Sengupta</span><br>
-      3-Finger Swipe Screenshot Module v2.1.0<br>
+      3-Finger Swipe Screenshot Module v2.5.0<br>
       Compatible with Magisk &amp; KernelSU
     </div>
   </div>
@@ -629,18 +629,15 @@
       try {
         await exec('sh /data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh restart');
         toast('Daemon restarted');
-        setTimeout(checkDaemon, 2500);
-      } finally { setTimeout(() => loading(false), 2000); }
+        setTimeout(checkDaemon, 3000);
+      } finally { loading(false); }
     }
 
     async function testScreenshot() {
       loading(true);
       try {
-        const ts = new Date().toISOString().replace(/[-T:.Z]/g, '').slice(0,14);
-        const dir = '/sdcard/Pictures/Screenshots';
-        const f   = dir + '/Screenshot_3swipe_test_' + ts + '.png';
-        await exec('mkdir -p "' + dir + '"; screencap -p "' + f + '"; am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://' + f + '" --user 0 >/dev/null 2>&1');
-        toast('Test screenshot captured!');
+        await exec('input keyevent 120');
+        toast('Screenshot taken!');
       } finally { loading(false); }
     }
 
@@ -659,21 +656,27 @@
     }
 
     async function checkDaemon() {
-      const pidR = await exec('cat "' + PID + '" 2>/dev/null');
-      const pid  = (pidR.out || '').trim();
-      const pidEl = document.getElementById('daemonPid');
-      const stEl  = document.getElementById('daemonStatus');
+      try {
+        const pidR = await exec('cat ' + PID + ' 2>/dev/null');
+        const pid = (pidR.out || '').trim().replace(/[^0-9]/g, '');
+        const pidEl = document.getElementById('daemonPid');
+        const stEl = document.getElementById('daemonStatus');
 
-      if (pid) {
-        const chk = await exec('kill -0 ' + pid + ' 2>/dev/null && echo running || echo stopped');
-        const ok  = (chk.out || '').trim() === 'running';
-        pidEl.textContent = pid;
-        stEl.textContent  = ok ? '● Running' : '○ Stopped';
-        stEl.style.color  = ok ? 'var(--success)' : 'var(--danger)';
-      } else {
-        pidEl.textContent = '—';
-        stEl.textContent  = '○ Not running';
-        stEl.style.color  = 'var(--danger)';
+        if (pid && pid.length > 0) {
+          // Use /proc/PID check — more reliable than kill -0
+          const chk = await exec('if [ -d /proc/' + pid + ' ]; then echo RUNNING; else echo STOPPED; fi');
+          const alive = (chk.out || '').indexOf('RUNNING') >= 0;
+          pidEl.textContent = pid;
+          stEl.textContent = alive ? '● Running' : '○ Stopped';
+          stEl.style.color = alive ? 'var(--success)' : 'var(--danger)';
+        } else {
+          pidEl.textContent = '—';
+          stEl.textContent = '○ Not running';
+          stEl.style.color = 'var(--danger)';
+        }
+      } catch(e) {
+        document.getElementById('daemonStatus').textContent = '? Error';
+        document.getElementById('daemonStatus').style.color = 'var(--warning)';
       }
     }
 

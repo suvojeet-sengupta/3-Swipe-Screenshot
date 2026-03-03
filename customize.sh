@@ -14,7 +14,7 @@ ui_print ""
 ui_print "╔═══════════════════════════════════════╗"
 ui_print "║  3-Finger Swipe Screenshot            ║"
 ui_print "║  Developer: Suvojeet Sengupta          ║"
-ui_print "║  Version: v2.0.0                       ║"
+ui_print "║  Version: v2.5.0                       ║"
 ui_print "╚═══════════════════════════════════════╝"
 ui_print ""
 ui_print "- Device: $(getprop ro.product.model)"
@@ -33,8 +33,11 @@ ui_print "- Installing 3-finger swipe daemon..."
 cp -af "$MODPATH/common/3swipe_daemon.sh" "$MODPATH/common/"
 chmod 0755 "$MODPATH/common/3swipe_daemon.sh"
 
-# Initialize default config if it doesn't exist
-if [ ! -f "/data/adb/3swipe/config.prop" ]; then
+# Initialize config — force enabled on dirty flash
+if [ -f "/data/adb/3swipe/config.prop" ]; then
+  ui_print "- Existing config found (dirty flash) — enabling..."
+  sed -i 's/^enabled=.*/enabled=1/' "/data/adb/3swipe/config.prop"
+else
   ui_print "- Creating default configuration..."
   cat > "/data/adb/3swipe/config.prop" << 'CONFIGEOF'
 # 3-Finger Swipe Screenshot Configuration
@@ -80,6 +83,8 @@ debug_log=0
 CONFIGEOF
   chmod 0644 "/data/adb/3swipe/config.prop"
 fi
+# Ensure enabled=1 is set regardless
+grep -q '^enabled=' "/data/adb/3swipe/config.prop" 2>/dev/null || echo 'enabled=1' >> "/data/adb/3swipe/config.prop"
 
 # Set permissions
 ui_print "- Setting permissions..."
