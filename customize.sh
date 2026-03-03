@@ -28,9 +28,25 @@ mkdir -p "$MODPATH/common"
 mkdir -p "$MODPATH/webroot"
 mkdir -p "/data/adb/3swipe"
 
-# Copy daemon and config
-ui_print "- Installing 3-finger swipe daemon..."
-cp -af "$MODPATH/common/3swipe_daemon.sh" "$MODPATH/common/"
+# Copy daemon and binaries
+ui_print "- Installing 3-finger swipe components..."
+
+# Detect Architecture
+ARCH=$(getprop ro.product.cpu.abi)
+ui_print "- Detected Architecture: $ARCH"
+
+if [ "$ARCH" = "arm64-v8a" ]; then
+  mv -f "$MODPATH/common/3swipe_interceptor_arm64" "$MODPATH/common/interceptor"
+  rm -f "$MODPATH/common/3swipe_interceptor_arm32"
+elif [ "$ARCH" = "armeabi-v7a" ] || [ "$ARCH" = "armeabi" ]; then
+  mv -f "$MODPATH/common/3swipe_interceptor_arm32" "$MODPATH/common/interceptor"
+  rm -f "$MODPATH/common/3swipe_interceptor_arm64"
+else
+  ui_print "! Warning: Unsupported architecture $ARCH, using arm64 as fallback"
+  mv -f "$MODPATH/common/3swipe_interceptor_arm64" "$MODPATH/common/interceptor"
+fi
+
+chmod 0755 "$MODPATH/common/interceptor"
 chmod 0755 "$MODPATH/common/3swipe_daemon.sh"
 
 # Initialize config — force enabled on dirty flash

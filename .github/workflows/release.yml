@@ -1,42 +1,85 @@
-name: Create Release and Upload Zip
+name: Production Release (Advanced 3-Swipe)
 
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Create Zip Archive
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26b # Latest stable NDK
+
+      - name: Compile C Interceptor (arm64-v8a)
         run: |
-          # Read module id and version from module.prop
-          MODULE_ID=$(grep "^id=" module.prop | cut -d'=' -f2)
-          VERSION=$(grep "^version=" module.prop | cut -d'=' -f2)
-          ZIP_NAME="${MODULE_ID}-${VERSION}.zip"
+          $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang \
+          -O3 -s -static-libgcc -o common/3swipe_interceptor_arm64 \
+          common/interceptor.c
+          chmod +x common/3swipe_interceptor_arm64
+
+      - name: Compile C Interceptor (armeabi-v7a)
+        run: |
+          $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi30-clang \
+          -O3 -s -static-libgcc -o common/3swipe_interceptor_arm32 \
+          common/interceptor.c
+          chmod +x common/3swipe_interceptor_arm32
+
+      - name: Get Module Metadata
+        id: metadata
+        run: |
+          # Read module id, version, and name from module.prop
+          ID=$(grep "^id=" module.prop | cut -d'=' -f2 | tr -d '\r')
+          VERSION=$(grep "^version=" module.prop | cut -d'=' -f2 | tr -d '\r')
+          NAME=$(grep "^name=" module.prop | cut -d'=' -f2 | tr -d '\r')
           
-          # Remove any existing zip to avoid zipping it inside itself
+          echo "MODULE_ID=$ID" >> $GITHUB_OUTPUT
+          echo "MODULE_VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "MODULE_NAME=$NAME" >> $GITHUB_OUTPUT
+          echo "ZIP_NAME=${ID}-${VERSION}.zip" >> $GITHUB_ENV
+
+      - name: Build Magisk Module (Zip)
+        run: |
+          # Clean up old zips
           rm -f *.zip
-          
-          # Zip all files excluding .git, .github, etc.
-          zip -r "$ZIP_NAME" . -x "*.git*" "*.github*" "*.gitattributes" "swipetoscreenshot.zip"
-          
-          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          # Zip the module structure, excluding source code and git files
+          zip -r "${{ env.ZIP_NAME }}" . \
+            -x "*.git*" "*.github*" "common/*.c" "common/*.h" "*.zip" "README.md" ".gitattributes"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name || format('v{0}', steps.metadata.outputs.MODULE_VERSION) }}
+          name: "${{ steps.metadata.outputs.MODULE_NAME }} ${{ steps.metadata.outputs.MODULE_VERSION }}"
+          body: |
+            ## 🚀 Production Release: ${{ steps.metadata.outputs.MODULE_VERSION }}
+            
+            **No-Scroll Engine Enabled**
+            This version includes the new C-based interceptor that blocks screen scrolling during 3-finger gestures.
+            
+            ### ✨ Features
+            - 🛡️ **Zero Scroll**: Intercepts touches before they reach the system.
+            - ⚡ **Low Latency**: Compiled C binary for maximum performance.
+            - 📱 **Multi-Arch**: Supports both ARM64 and ARM32 devices.
+            - 🛠️ **Magisk/KSU Support**: Fully compatible with latest Magisk and KernelSU.
+            
+            ### 📦 Installation
+            1. Download the zip below.
+            2. Install via Magisk App or KernelSU Manager.
+            3. Reboot and enjoy!
           files: ${{ env.ZIP_NAME }}
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ env.VERSION }}
-          body: "Automatically generated Magisk module zip for ${{ env.VERSION }}"
           draft: false
           prerelease: false
         env:
