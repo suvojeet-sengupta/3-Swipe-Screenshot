@@ -1,0 +1,147 @@
+#!/sbin/sh
+
+#################
+# Initialization
+#################
+
+umask 022
+
+# Global vars
+TMPDIR=/dev/tmp
+PERSISTDIR=/sbin/.magisk/mirror/persist
+
+rm -rf $TMPDIR 2>/dev/null
+mkdir -p $TMPDIR
+
+# echo before loading util_functions
+ui_print() { echo "$1"; }
+
+require_new_magisk() {
+  ui_print "*******************************"
+  ui_print " Please install Magisk v20.4+! "
+  ui_print "*******************************"
+  exit 1
+}
+
+is_legacy_script() {
+  unzip -l "$ZIPFILE" install.sh 2>/dev/null | grep -q install.sh
+  return $?
+}
+
+print_modname() {
+  local len
+  len=$(echo -n "  $MODID  " | wc -c)
+  local pounds
+  pounds=$(printf '%*s' $len | tr ' ' '*')
+  ui_print "$pounds"
+  ui_print " $MODID "
+  ui_print "$pounds"
+  ui_print "*******************"
+  ui_print " Powered by Magisk "
+  ui_print "*******************"
+}
+
+##############
+# Environment
+##############
+
+OUTFD=$2
+ZIPFILE=$3
+
+mount /data 2>/dev/null
+
+# Load utility functions
+[ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk
+. /data/adb/magisk/util_functions.sh
+[ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk
+
+# Prep flash
+setup_flashable $OUTFD $ZIPFILE
+mount_partitions
+api_level_arch_detect
+$BOOTMODE || abort "! Install from Magisk Manager / KernelSU Manager only!"
+
+# Setup BusyBox and binaries
+$BOOTMODE && boot_actions || recovery_actions
+
+##############
+# Preparation
+##############
+
+# Extract module files
+unzip -o "$ZIPFILE" module.prop -d $TMPDIR >&2
+[ ! -f $TMPDIR/module.prop ] && abort "! Unable to extract zip file!"
+
+$BOOTMODE && MODDIRNAME=modules_update || MODDIRNAME=modules
+MODULEROOT=$NVBASE/$MODDIRNAME
+MODID=$(grep_prop id $TMPDIR/module.prop)
+MODPATH=$MODULEROOT/$MODID
+MODNAME=$(grep_prop name $TMPDIR/module.prop)
+
+# Create mod paths
+rm -rf $MODPATH 2>/dev/null
+mkdir -p $MODPATH
+
+##########
+# Install
+##########
+
+ui_print "- Extracting module files"
+unzip -o "$ZIPFILE" -d $MODPATH >&2
+
+# Remove placeholder
+rm -f $MODPATH/customize.sh 2>/dev/null
+
+# Default permissions
+set_perm_recursive $MODPATH 0 0 0755 0644
+
+# Set script permissions
+for f in $MODPATH/*.sh $MODPATH/common/*.sh; do
+  [ -f "$f" ] && set_perm $f 0 0 0755
+done
+
+# Run customized setup
+if [ -f $MODPATH/customize.sh ]; then
+  . $MODPATH/customize.sh
+fi
+
+# Handle replace folders
+for TARGET in $REPLACE; do
+  ui_print "- Replace target: $TARGET"
+  mktouch $MODPATH$TARGET/.replace
+done
+
+# Auto Mount
+$AUTOMOUNT && touch $MODPATH/auto_mount
+
+# prop files
+$PROPFILE && cp -af $MODPATH/system.prop $MODPATH/system.prop
+
+# Module info
+cp -af $MODPATH/module.prop $MODPATH/module.prop
+
+# post-fs-data mode
+$POSTFSDATA && cp -af $MODPATH/post-fs-data.sh $MODPATH/post-fs-data.sh
+
+# late start service mode
+$LATESTARTSERVICE && cp -af $MODPATH/service.sh $MODPATH/service.sh
+
+ui_print ""
+ui_print "======================================="
+ui_print "  3-Finger Swipe Screenshot Module     "
+ui_print "  Developer: Suvojeet Sengupta          "
+ui_print "  Version: v2.0.0                       "
+ui_print "======================================="
+ui_print ""
+ui_print "- Installation complete!"
+ui_print "- Reboot to activate the module"
+ui_print ""
+
+##############
+# Finalizing
+##############
+
+cd /
+$BOOTMODE || recovery_cleanup
+rm -rf $TMPDIR
+exit 0

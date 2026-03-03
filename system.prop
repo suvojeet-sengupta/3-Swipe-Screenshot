@@ -1,0 +1,8 @@
+# 3-Finger Swipe Screenshot Module
+# System Properties
+# Developer: Suvojeet Sengupta
+
+# Enable three-finger screenshot gesture support
+persist.sys.three_finger_screenshot=1
+persist.sys.gesture.screenshot=1
+persist.sys.three_finger_gesture=1
