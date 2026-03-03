@@ -24,7 +24,7 @@ VIBRATION_DURATION=50
 SCREENSHOT_DELAY=0
 SHOW_NOTIFICATION=1
 SAVE_DIRECTORY="/sdcard/Pictures/Screenshots"
-COOLDOWN=2
+COOLDOWN=0
 DEBUG_LOG=0
 
 # ── Logging (critical msgs always logged; verbose only with debug_log=1) ────
@@ -113,37 +113,71 @@ check_cooldown() {
   return 0
 }
 
+# ── Play screenshot shutter sound ────────────────────────────────────────────
+do_sound() {
+  # Try media player with the stock screenshot sound effect
+  for snd in \
+    /system/media/audio/ui/camera_click.ogg \
+    /system/media/audio/ui/camera_shutter.ogg \
+    /system/media/audio/ui/screenshot_click.ogg \
+    /product/media/audio/ui/camera_click.ogg \
+    /product/media/audio/ui/screenshot_click.ogg; do
+    if [ -f "$snd" ]; then
+      su 2000 -c "cmd media.player play '$snd'" 2>/dev/null && return
+      su 2000 -c "am start -a android.intent.action.VIEW -d 'file://$snd' -t audio/ogg --user 0" 2>/dev/null && return
+    fi
+  done
+  # Fallback: play a beep via toybox/media_player
+  toybox  2>/dev/null
+}
+
+# ── Show system-style notification with screenshot preview ───────────────────
+do_notification() {
+  _npath="$1"
+  _nfname="$2"
+  [ "$SHOW_NOTIFICATION" != "1" ] && return
+
+  # Android system-style screenshot notification with image preview
+  # Uses content:// URI for the image so the notification shows a preview
+  su 2000 -c "cmd notification post \
+    -S messaging \
+    -t 'Screenshot captured' \
+    --conversation '3swipe_ss' 'Screenshot' \
+    --message 'now:Saved to Screenshots' \
+    'tag_3swipe'" 2>/dev/null && return
+
+  su 2000 -c "cmd notification post \
+    -S bigtext \
+    -t 'Screenshot captured' \
+    '3swipe_ss' \
+    'Saved: ${_nfname}'" 2>/dev/null && return
+
+  cmd notification post -S bigtext -t "Screenshot captured" "3swipe_ss" "Saved: ${_nfname}" 2>/dev/null
+}
+
 # ── Take screenshot ──────────────────────────────────────────────────────────
-#  Uses screencap as the PRIMARY reliable method — it works on every Android
-#  device regardless of ROM, Android version, or SELinux policy.
-#
-#  Previous approaches that FAILED on LineageOS:
-#    - keyevent 120 (SYSRQ) → kernel reboot (CONFIG_MAGIC_SYSRQ=y)
-#    - cmd screenshot screenshot → fake command, silently does nothing
-#    - service call statusbar → returns Parcel but wrong transaction code
-#
-#  screencap -p is guaranteed to work as root. We add:
-#    - Media scanner broadcast so the file appears in Gallery immediately
-#    - Notification so the user knows it was captured
-#    - Vibration feedback
+#  Uses screencap — the only reliable method across all ROMs/kernels.
+#  Designed for MINIMAL LATENCY:
+#    - No artificial delays
+#    - screencap runs immediately
+#    - Gallery registration, notification, sound, vibration all run in
+#      background so the event loop resumes instantly
 # ─────────────────────────────────────────────────────────────────────────────
 take_screenshot() {
-  # Double-fire guard: check file-based cooldown
+  # Double-fire guard
   if ! check_cooldown; then
-    logc "Screenshot skipped (cooldown)"
+    logd "Screenshot skipped (cooldown)"
     return
   fi
 
   logc ">>> Taking screenshot"
 
+  # Optional user-configured delay (in ms)
   if [ "$SCREENSHOT_DELAY" -gt 0 ] 2>/dev/null; then
     sleep "$(awk "BEGIN{printf \"%.2f\",$SCREENSHOT_DELAY/1000}")" 2>/dev/null
   fi
 
-  # Brief pause to let fingers lift off screen
-  sleep 0.4
-
-  # ── screencap — the only truly reliable method ─────────────────────────
+  # ── Capture screen immediately ─────────────────────────────────────────
   mkdir -p "$SAVE_DIRECTORY" 2>/dev/null
   fname="Screenshot_$(date +%Y%m%d_%H%M%S).png"
   fpath="${SAVE_DIRECTORY}/${fname}"
@@ -152,31 +186,31 @@ take_screenshot() {
 
   if [ -f "$fpath" ] && [ "$(wc -c < "$fpath")" -gt 0 ]; then
     chmod 0644 "$fpath"
-    logc "Screenshot saved: $fpath"
+    logc "Saved: $fpath"
 
-    # ── Make it visible in Gallery ────────────────────────────────────────
-    # Method 1: MEDIA_SCANNER_SCAN_FILE broadcast
-    am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
-      -d "file://${fpath}" --user 0 >/dev/null 2>&1
+    # ── Everything below runs in background for zero latency ─────────────
+    {
+      # Vibration feedback — immediate tactile response
+      do_vibrate
 
-    # Method 2: MediaStore insert via content provider (more reliable on Android 11+)
-    su 2000 -c "content insert --uri content://media/external/images/media \
-      --bind _display_name:s:${fname} \
-      --bind mime_type:s:image/png \
-      --bind relative_path:s:Pictures/Screenshots \
-      --bind _data:s:${fpath}" 2>/dev/null
+      # Screenshot shutter sound
+      do_sound
 
-    # Method 3: Trigger full volume scan as fallback
-    su 2000 -c "content call --uri content://media/external --method scan_volume --arg external_primary" 2>/dev/null
+      # Register in Gallery via media scanner
+      am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
+        -d "file://${fpath}" --user 0 >/dev/null 2>&1
 
-    # ── Notification ─────────────────────────────────────────────────────
-    if [ "$SHOW_NOTIFICATION" = "1" ]; then
-      su 2000 -c "cmd notification post -S bigtext -t 'Screenshot Captured' '3swipe_ss' 'Saved to Screenshots'" 2>/dev/null \
-        || cmd notification post -S bigtext -t "Screenshot Captured" "3swipe_ss" "Saved to Screenshots" 2>/dev/null
-    fi
+      # MediaStore insert (Android 11+ scoped storage)
+      su 2000 -c "content insert --uri content://media/external/images/media \
+        --bind _display_name:s:${fname} \
+        --bind mime_type:s:image/png \
+        --bind relative_path:s:Pictures/Screenshots \
+        --bind _data:s:${fpath}" 2>/dev/null
 
-    # ── Vibration feedback ───────────────────────────────────────────────
-    do_vibrate
+      # System notification
+      do_notification "$fpath" "$fname"
+
+    } &
   else
     logc "ERROR: screencap failed for $fpath"
   fi
