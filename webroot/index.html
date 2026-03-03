@@ -6,761 +6,312 @@
   <title>3-Finger Swipe Screenshot</title>
   <style>
     :root {
-      --bg-primary: #0f0f14;
-      --bg-secondary: #1a1a24;
-      --bg-card: #22223a;
-      --bg-card-hover: #2a2a45;
+      --bg: #101014;
+      --surface: #1a1a22;
+      --card: #21212e;
+      --border: rgba(255,255,255,0.06);
       --accent: #7c6aff;
-      --accent-light: #9d8fff;
-      --accent-glow: rgba(124, 106, 255, 0.25);
-      --text-primary: #eaeaef;
-      --text-secondary: #9898b0;
-      --text-muted: #5e5e78;
-      --success: #3dd68c;
-      --danger: #ff5a7a;
-      --warning: #ffb84d;
-      --border: rgba(255, 255, 255, 0.06);
-      --radius: 16px;
-      --radius-sm: 10px;
+      --accent-dim: rgba(124,106,255,0.15);
+      --green: #3dd68c;
+      --red: #ff5a7a;
+      --text: #e8e8f0;
+      --text2: #8888a0;
+      --text3: #555568;
+      --r: 14px;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;padding-bottom:40px}
 
-    /* ── Header ────────────────────────── */
-    .header {
-      background: linear-gradient(135deg, var(--bg-secondary) 0%, #1e1e35 100%);
-      padding: 28px 20px 24px;
-      border-bottom: 1px solid var(--border);
-      position: relative; overflow: hidden;
-    }
-    .header::before {
-      content: '';
-      position: absolute; top: -50%; right: -20%;
-      width: 300px; height: 300px;
-      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .header-content { position: relative; z-index: 1; }
-    .header-top { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
-    .header-icon {
-      width: 48px; height: 48px;
-      background: linear-gradient(135deg, var(--accent), #5a4ed4);
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 4px 20px var(--accent-glow);
-    }
-    .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
-    .header .subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
-    .header .version-badge {
-      display: inline-block;
-      background: rgba(124, 106, 255, 0.15);
-      color: var(--accent-light);
-      padding: 3px 10px; border-radius: 20px;
-      font-size: 11px; font-weight: 600; margin-top: 10px;
-      border: 1px solid rgba(124, 106, 255, 0.2);
-    }
+    /* Header */
+    .hdr{padding:28px 20px 20px;background:var(--surface);border-bottom:1px solid var(--border)}
+    .hdr h1{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+    .hdr h1 span{font-size:22px}
+    .hdr p{font-size:12px;color:var(--text2);margin-top:4px}
 
-    /* ── Status Banner ─────────────────── */
-    .status-banner {
-      margin: 16px;
-      padding: 16px 18px;
-      border-radius: var(--radius);
-      display: flex; align-items: center; gap: 14px;
-      transition: all 0.4s ease;
-    }
-    .status-banner.active {
-      background: linear-gradient(135deg, rgba(61, 214, 140, 0.12), rgba(61, 214, 140, 0.05));
-      border: 1px solid rgba(61, 214, 140, 0.2);
-    }
-    .status-banner.inactive {
-      background: linear-gradient(135deg, rgba(255, 90, 122, 0.12), rgba(255, 90, 122, 0.05));
-      border: 1px solid rgba(255, 90, 122, 0.2);
-    }
-    .status-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .status-banner.active .status-dot {
-      background: var(--success);
-      box-shadow: 0 0 12px rgba(61, 214, 140, 0.5);
-      animation: pulse 2s ease-in-out infinite;
-    }
-    .status-banner.inactive .status-dot {
-      background: var(--danger);
-      box-shadow: 0 0 12px rgba(255, 90, 122, 0.3);
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.85); }
-    }
-    .status-text h3 { font-size: 14px; font-weight: 600; }
-    .status-text p  { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    /* Status chip */
+    .status{margin:16px;padding:14px 16px;border-radius:var(--r);display:flex;align-items:center;gap:12px}
+    .status.on{background:rgba(61,214,140,0.08);border:1px solid rgba(61,214,140,0.18)}
+    .status.off{background:rgba(255,90,122,0.08);border:1px solid rgba(255,90,122,0.18)}
+    .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .status.on .dot{background:var(--green);box-shadow:0 0 8px rgba(61,214,140,0.5);animation:pulse 2s infinite}
+    .status.off .dot{background:var(--red)}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    .status b{font-size:14px;font-weight:600}
+    .status small{font-size:11px;color:var(--text2);display:block;margin-top:2px}
 
-    /* ── Container / Section / Card ──── */
-    .container { padding: 0 16px 100px; }
-    .section { margin-bottom: 20px; }
-    .section-title {
-      font-size: 12px; font-weight: 700; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 1.2px;
-      padding: 0 4px; margin-bottom: 10px;
-    }
-    .card {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
+    /* Sections */
+    .sec{padding:0 16px;margin-bottom:18px}
+    .sec-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-left:2px}
+    .card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden}
 
-    /* ── Setting Row ───────────────────── */
-    .setting-row {
-      padding: 16px 18px;
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.2s;
-    }
-    .setting-row:last-child { border-bottom: none; }
-    .setting-row:active { background: var(--bg-card-hover); }
-    .setting-info { flex: 1; min-width: 0; }
-    .setting-label { font-size: 15px; font-weight: 500; color: var(--text-primary); }
-    .setting-desc { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
+    /* Rows */
+    .row{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border)}
+    .row:last-child{border-bottom:none}
+    .row .lbl{font-size:14px;font-weight:500}
+    .row .sub{font-size:11px;color:var(--text2);margin-top:2px}
+    .row .info{flex:1;min-width:0}
 
-    /* ── Toggle Switch ─────────────────── */
-    .toggle { position: relative; width: 52px; height: 30px; flex-shrink: 0; }
-    .toggle input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider {
-      position: absolute; inset: 0;
-      background: #3a3a52; border-radius: 30px;
-      cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .toggle-slider::before {
-      content: ''; position: absolute;
-      width: 24px; height: 24px; background: white; border-radius: 50%;
-      top: 3px; left: 3px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-    .toggle input:checked + .toggle-slider {
-      background: var(--accent);
-      box-shadow: 0 0 16px var(--accent-glow);
-    }
-    .toggle input:checked + .toggle-slider::before { transform: translateX(22px); }
+    /* Toggle */
+    .tog{position:relative;width:48px;height:28px;flex-shrink:0}
+    .tog input{opacity:0;width:0;height:0}
+    .tog .sl{position:absolute;inset:0;background:#333346;border-radius:28px;cursor:pointer;transition:.3s}
+    .tog .sl::before{content:'';position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+    .tog input:checked+.sl{background:var(--accent)}
+    .tog input:checked+.sl::before{transform:translateX(20px)}
 
-    /* ── Select ────────────────────────── */
-    .setting-select {
-      background: var(--bg-primary); color: var(--text-primary);
-      border: 1px solid var(--border); border-radius: var(--radius-sm);
-      padding: 8px 12px; font-size: 13px; font-family: inherit;
-      cursor: pointer; min-width: 100px;
-      -webkit-appearance: none; appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239898b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 10px center;
-      padding-right: 30px;
-    }
+    /* Select */
+    .sel{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 28px 7px 10px;font-size:13px;font-family:inherit;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 
-    /* ── Range Slider ──────────────────── */
-    .range-container { display: flex; align-items: center; gap: 12px; min-width: 140px; }
-    .range-value { font-size: 14px; font-weight: 600; color: var(--accent-light); min-width: 36px; text-align: right; }
-    input[type="range"] {
-      -webkit-appearance: none; appearance: none;
-      width: 90px; height: 4px; border-radius: 4px;
-      background: #3a3a52; outline: none;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 20px; height: 20px; border-radius: 50%;
-      background: var(--accent); cursor: pointer;
-      box-shadow: 0 2px 10px var(--accent-glow);
-    }
+    /* Range */
+    .rng{display:flex;align-items:center;gap:10px}
+    .rng input[type=range]{-webkit-appearance:none;width:80px;height:3px;border-radius:3px;background:#333346;outline:none}
+    .rng input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer}
+    .rng .rv{font-size:13px;font-weight:600;color:var(--accent);min-width:32px;text-align:right}
 
-    /* ── Buttons ────────────────────────── */
-    .btn-group { display: flex; gap: 10px; margin-top: 16px; }
-    .btn {
-      flex: 1; padding: 14px; border-radius: var(--radius-sm);
-      border: none; font-size: 14px; font-weight: 600; font-family: inherit;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: all 0.2s; -webkit-tap-highlight-color: transparent;
-    }
-    .btn:active { transform: scale(0.97); }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #5a4ed4);
-      color: white; box-shadow: 0 4px 16px var(--accent-glow);
-    }
-    .btn-secondary { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); }
-    .btn-danger { background: rgba(255, 90, 122, 0.12); color: var(--danger); border: 1px solid rgba(255, 90, 122, 0.2); }
-    .btn-success { background: rgba(61, 214, 140, 0.12); color: var(--success); border: 1px solid rgba(61, 214, 140, 0.2); }
+    /* Buttons */
+    .btns{display:flex;gap:10px;padding:0 16px;margin-bottom:18px}
+    .btn{flex:1;padding:13px;border-radius:10px;border:none;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s;-webkit-tap-highlight-color:transparent}
+    .btn:active{transform:scale(.97);opacity:.85}
+    .btn-a{background:linear-gradient(135deg,var(--accent),#5a4ed4);color:#fff}
+    .btn-b{background:var(--card);color:var(--text);border:1px solid var(--border)}
 
-    /* ── Info Card ──────────────────────── */
-    .info-card {
-      background: var(--bg-card); border-radius: var(--radius);
-      border: 1px solid var(--border); padding: 18px;
-    }
-    .info-row {
-      display: flex; justify-content: space-between;
-      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
-    }
-    .info-row:last-child { border-bottom: none; }
-    .info-key { color: var(--text-secondary); }
-    .info-value { color: var(--text-primary); font-weight: 500; }
+    /* Daemon info line */
+    .daemon-line{padding:0 16px;margin-bottom:18px;display:flex;gap:10px;font-size:12px;color:var(--text2)}
+    .daemon-line span{background:var(--card);padding:6px 12px;border-radius:8px;border:1px solid var(--border)}
+    .daemon-line .pid{color:var(--accent);font-weight:600}
 
-    /* ── How It Works ──────────────────── */
-    .how-it-works {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      padding: 18px;
-    }
-    .how-step {
-      display: flex; gap: 14px; padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .how-step:last-child { border-bottom: none; }
-    .step-num {
-      width: 28px; height: 28px; flex-shrink: 0;
-      background: linear-gradient(135deg, var(--accent), #5a4ed4);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700; color: white;
-    }
-    .step-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
-    .step-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
-    .method-tag {
-      display: inline-block;
-      padding: 2px 8px; border-radius: 6px;
-      font-size: 10px; font-weight: 600;
-      margin-top: 4px;
-    }
-    .method-tag.native {
-      background: rgba(61, 214, 140, 0.15); color: var(--success);
-      border: 1px solid rgba(61, 214, 140, 0.2);
-    }
-    .method-tag.fallback {
-      background: rgba(255, 184, 77, 0.15); color: var(--warning);
-      border: 1px solid rgba(255, 184, 77, 0.2);
-    }
+    /* Toast */
+    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);color:var(--text);padding:10px 22px;border-radius:24px;font-size:13px;font-weight:500;border:1px solid var(--border);box-shadow:0 6px 24px rgba(0,0,0,.5);opacity:0;transition:.3s;z-index:999;white-space:nowrap}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    /* ── Toast ──────────────────────────── */
-    .toast {
-      position: fixed; bottom: 80px; left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: var(--bg-card); color: var(--text-primary);
-      padding: 12px 24px; border-radius: 30px;
-      font-size: 14px; font-weight: 500;
-      border: 1px solid var(--border);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 1000; white-space: nowrap;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* Loading */
+    .ld{position:fixed;inset:0;background:rgba(10,10,14,.8);display:flex;align-items:center;justify-content:center;z-index:2000;opacity:0;pointer-events:none;transition:.3s}
+    .ld.show{opacity:1;pointer-events:all}
+    .sp{width:36px;height:36px;border:3px solid var(--card);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* ── Gesture Preview ───────────────── */
-    .gesture-preview { display: flex; justify-content: center; padding: 24px; margin: 16px 0; }
-    .phone-frame {
-      width: 120px; height: 200px;
-      border: 2px solid var(--text-muted); border-radius: 18px;
-      position: relative; display: flex; align-items: center; justify-content: center;
-      background: var(--bg-primary);
-    }
-    .swipe-arrows { display: flex; gap: 10px; }
-    .swipe-arrow {
-      width: 3px; height: 60px;
-      background: linear-gradient(to bottom, var(--accent-light), var(--accent));
-      border-radius: 3px; position: relative;
-      animation: swipeDown 2s ease-in-out infinite;
-    }
-    .swipe-arrow:nth-child(2) { animation-delay: 0.1s; }
-    .swipe-arrow:nth-child(3) { animation-delay: 0.2s; }
-    .swipe-arrow::after {
-      content: ''; position: absolute; bottom: -2px; left: 50%;
-      width: 8px; height: 8px;
-      border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent);
-      transform: translateX(-50%) rotate(45deg);
-    }
-    @keyframes swipeDown {
-      0% { opacity: 0; transform: translateY(-20px); }
-      30% { opacity: 1; } 70% { opacity: 1; }
-      100% { opacity: 0; transform: translateY(20px); }
-    }
-    .gesture-label { text-align: center; font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+    /* Log modal */
+    .log-modal{display:none;position:fixed;inset:0;z-index:3000;background:var(--bg);overflow-y:auto}
+    .log-modal .top{display:flex;justify-content:space-between;align-items:center;padding:20px}
+    .log-modal h2{font-size:16px}
+    .log-modal .close{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer}
+    .log-modal pre{margin:0 16px 20px;background:var(--card);padding:14px;border-radius:10px;font-size:11px;color:var(--text2);white-space:pre-wrap;word-break:break-all;max-height:75vh;overflow-y:auto;border:1px solid var(--border)}
 
-    /* ── Footer ─────────────────────────── */
-    .footer { text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 12px; line-height: 1.8; }
-    .footer .dev-name { color: var(--accent-light); font-weight: 600; }
-
-    /* ── Loading Overlay ───────────────── */
-    .loading-overlay {
-      position: fixed; inset: 0; background: rgba(15,15,20,0.8);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-    }
-    .loading-overlay.show { opacity: 1; pointer-events: all; }
-    .loading-spinner {
-      width: 40px; height: 40px;
-      border: 3px solid var(--bg-card); border-top-color: var(--accent);
-      border-radius: 50%; animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Footer */
+    .ftr{text-align:center;padding:24px 16px 8px;font-size:11px;color:var(--text3);line-height:1.6}
+    .ftr b{color:var(--accent);font-weight:600}
   </style>
 </head>
 <body>
 
   <!-- Header -->
-  <div class="header">
-    <div class="header-content">
-      <div class="header-top">
-        <div class="header-icon">📸</div>
-        <div>
-          <h1>3-Finger Screenshot</h1>
-          <div class="subtitle">Native system screenshot via gesture</div>
-        </div>
-      </div>
-      <span class="version-badge">v2.7.0 • Suvojeet Sengupta</span>
-    </div>
+  <div class="hdr">
+    <h1><span>📸</span> 3-Finger Screenshot</h1>
+    <p>Swipe down with 3 fingers to capture screen</p>
   </div>
 
-  <!-- Status Banner -->
-  <div class="status-banner active" id="statusBanner">
-    <div class="status-dot"></div>
-    <div class="status-text">
-      <h3 id="statusTitle">Module Active</h3>
-      <p id="statusDesc">Listening for 3-finger swipe gestures</p>
-    </div>
-  </div>
-
-  <!-- Gesture Preview -->
-  <div class="gesture-preview">
+  <!-- Status -->
+  <div class="status on" id="statusBanner">
+    <div class="dot"></div>
     <div>
-      <div class="phone-frame">
-        <div class="swipe-arrows">
-          <div class="swipe-arrow"></div>
-          <div class="swipe-arrow"></div>
-          <div class="swipe-arrow"></div>
-        </div>
-      </div>
-      <div class="gesture-label">Swipe down with 3 fingers</div>
+      <b id="statusTitle">Active</b>
+      <small id="statusDesc">Listening for gestures</small>
     </div>
   </div>
 
-  <div class="container">
-
-    <!-- Main Toggle -->
-    <div class="section">
-      <div class="section-title">Main Control</div>
-      <div class="card">
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Enable 3-Finger Screenshot</div>
-            <div class="setting-desc">Start or stop the gesture detection daemon</div>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="toggleEnabled" checked onchange="toggleFeature(this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
+  <!-- Enable -->
+  <div class="sec">
+    <div class="card">
+      <div class="row">
+        <div class="info">
+          <div class="lbl">Enable</div>
+          <div class="sub">Start or stop gesture detection</div>
         </div>
+        <label class="tog">
+          <input type="checkbox" id="toggleEnabled" checked onchange="toggleFeature(this.checked)">
+          <span class="sl"></span>
+        </label>
       </div>
     </div>
+  </div>
 
-    <!-- Gesture Settings -->
-    <div class="section">
-      <div class="section-title">Gesture Settings</div>
-      <div class="card">
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Swipe Direction</div>
-            <div class="setting-desc">Which direction to swipe with 3 fingers</div>
-          </div>
-          <select class="setting-select" id="swipeDirection" onchange="saveSetting('swipe_direction', this.value)">
-            <option value="down">Down ↓</option>
-            <option value="up">Up ↑</option>
-          </select>
+  <!-- Settings -->
+  <div class="sec">
+    <div class="sec-title">Settings</div>
+    <div class="card">
+      <div class="row">
+        <div class="info"><div class="lbl">Direction</div></div>
+        <select class="sel" id="swipeDirection" onchange="saveSetting('swipe_direction',this.value)">
+          <option value="down">Down ↓</option>
+          <option value="up">Up ↑</option>
+        </select>
+      </div>
+      <div class="row">
+        <div class="info">
+          <div class="lbl">Sensitivity</div>
+          <div class="sub">Lower = easier to trigger</div>
         </div>
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Sensitivity</div>
-            <div class="setting-desc">How far fingers must move to trigger (lower = easier)</div>
-          </div>
-          <div class="range-container">
-            <input type="range" id="sensitivity" min="100" max="800" step="50" value="300"
-              oninput="updateRange('sensitivity','sensitivityVal','px'); saveSetting('swipe_threshold',this.value)">
-            <span class="range-value" id="sensitivityVal">300px</span>
-          </div>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Cooldown</div>
-            <div class="setting-desc">Minimum gap between screenshots to prevent double-triggers</div>
-          </div>
-          <div class="range-container">
-            <input type="range" id="cooldown" min="1" max="10" step="1" value="2"
-              oninput="updateRange('cooldown','cooldownVal','s'); saveSetting('cooldown',this.value)">
-            <span class="range-value" id="cooldownVal">2s</span>
-          </div>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Vibration Feedback</div>
-            <div class="setting-desc">Vibrate when screenshot is taken (fallback mode only)</div>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="toggleVibration" checked onchange="saveSetting('vibration',this.checked?'1':'0')">
-            <span class="toggle-slider"></span>
-          </label>
+        <div class="rng">
+          <input type="range" id="sensitivity" min="100" max="800" step="50" value="300"
+            oninput="updateRange('sensitivity','sensVal','px');saveSetting('swipe_threshold',this.value)">
+          <span class="rv" id="sensVal">300px</span>
         </div>
       </div>
-    </div>
-
-    <!-- How It Works -->
-    <div class="section">
-      <div class="section-title">How It Works</div>
-      <div class="how-it-works">
-        <div class="how-step">
-          <div class="step-num">1</div>
-          <div class="step-content">
-            <div class="step-title">Touch Detection</div>
-            <div class="step-desc">A lightweight daemon reads raw touch events from your screen's input device via <b>getevent</b>. It tracks each finger's position in real-time with zero battery drain when idle.</div>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="step-num">2</div>
-          <div class="step-content">
-            <div class="step-title">Gesture Recognition</div>
-            <div class="step-desc">When 3+ fingers are detected swiping in the configured direction past the sensitivity threshold, a screenshot is triggered. A cooldown timer prevents accidental double-fires.</div>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="step-num">3</div>
-          <div class="step-content">
-            <div class="step-title">Native System Screenshot</div>
-            <div class="step-desc">Triggers Android's built-in screenshot — you get the same animation, sound, notification, and share options as pressing <b>Power + Volume Down</b>. Exactly like LineageOS or stock Android.</div>
-            <span class="method-tag native">NATIVE</span>
-          </div>
-        </div>
-        <div class="how-step">
-          <div class="step-num">⚡</div>
-          <div class="step-content">
-            <div class="step-title">Automatic Fallback</div>
-            <div class="step-desc">If native screenshot isn't available on your ROM, the module automatically falls back to <b>screencap</b> — saves the image, registers it in Gallery, and shows a notification.</div>
-            <span class="method-tag fallback">FALLBACK</span>
-          </div>
-        </div>
+      <div class="row">
+        <div class="info"><div class="lbl">Vibration</div></div>
+        <label class="tog">
+          <input type="checkbox" id="toggleVibration" checked onchange="saveSetting('vibration',this.checked?'1':'0')">
+          <span class="sl"></span>
+        </label>
       </div>
     </div>
+  </div>
 
-    <!-- Actions -->
-    <div class="section">
-      <div class="section-title">Actions</div>
-      <div class="btn-group">
-        <button class="btn btn-primary" onclick="restartDaemon()">🔄 Restart</button>
-        <button class="btn btn-secondary" onclick="testScreenshot()">📸 Test</button>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-success" onclick="viewLogs()">📋 Logs</button>
-        <button class="btn btn-danger" onclick="clearLogs()">🗑️ Clear</button>
-      </div>
-    </div>
+  <!-- Actions -->
+  <div class="btns">
+    <button class="btn btn-a" onclick="restartDaemon()">↻ Restart</button>
+    <button class="btn btn-b" onclick="testScreenshot()">📸 Test</button>
+  </div>
 
-    <!-- Troubleshooting -->
-    <div class="section">
-      <div class="section-title">Troubleshooting</div>
-      <div class="card">
-        <div class="setting-row">
-          <div class="setting-info">
-            <div class="setting-label">Debug Logging</div>
-            <div class="setting-desc">Record detailed events for troubleshooting — enable before reporting issues</div>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="toggleDebug" onchange="saveSetting('debug_log',this.checked?'1':'0')">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
+  <!-- Daemon -->
+  <div class="daemon-line">
+    <span>Daemon: <b id="daemonStatus" style="color:var(--green)">Checking...</b></span>
+    <span>PID: <b class="pid" id="daemonPid">—</b></span>
+  </div>
+
+  <!-- Troubleshoot -->
+  <div class="sec">
+    <div class="sec-title">Troubleshoot</div>
+    <div class="card">
+      <div class="row">
+        <div class="info"><div class="lbl">Debug Logging</div></div>
+        <label class="tog">
+          <input type="checkbox" id="toggleDebug" onchange="saveSetting('debug_log',this.checked?'1':'0')">
+          <span class="sl"></span>
+        </label>
       </div>
     </div>
-
-    <!-- Module Info -->
-    <div class="section">
-      <div class="section-title">Module Info</div>
-      <div class="info-card">
-        <div class="info-row"><span class="info-key">Module</span><span class="info-value">3-Finger Swipe Screenshot</span></div>
-        <div class="info-row"><span class="info-key">Version</span><span class="info-value">v2.7.0</span></div>
-        <div class="info-row"><span class="info-key">Developer</span><span class="info-value" style="color:var(--accent-light)">Suvojeet Sengupta</span></div>
-        <div class="info-row"><span class="info-key">Android</span><span class="info-value">11 – 16+</span></div>
-        <div class="info-row"><span class="info-key">Root</span><span class="info-value">Magisk / KernelSU</span></div>
-        <div class="info-row"><span class="info-key">Daemon</span><span class="info-value" id="daemonStatus">Checking...</span></div>
-        <div class="info-row"><span class="info-key">PID</span><span class="info-value" id="daemonPid">—</span></div>
-        <div class="info-row"><span class="info-key">Screenshot Method</span><span class="info-value" id="ssMethod">Detecting...</span></div>
-      </div>
+    <div class="btns" style="padding:10px 0 0;margin:0">
+      <button class="btn btn-b" onclick="viewLogs()" style="font-size:12px;padding:10px">📋 View Logs</button>
+      <button class="btn btn-b" onclick="clearLogs()" style="font-size:12px;padding:10px;color:var(--red)">🗑 Clear Logs</button>
     </div>
+  </div>
 
-    <div class="footer">
-      Made with ❤️ by <span class="dev-name">Suvojeet Sengupta</span><br>
-      3-Finger Swipe Screenshot Module v2.7.0<br>
-      Compatible with Magisk &amp; KernelSU
-    </div>
+  <!-- Footer -->
+  <div class="ftr">
+    Made by <b>Suvojeet Sengupta</b><br>
+    v2.7 · Magisk / KernelSU
   </div>
 
   <div class="toast" id="toast"></div>
+  <div class="ld" id="loadingOverlay"><div class="sp"></div></div>
 
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-spinner"></div>
-  </div>
-
-  <!-- Log Modal -->
-  <div id="logModal" style="display:none;position:fixed;inset:0;z-index:3000;background:var(--bg-primary);overflow-y:auto;">
-    <div style="padding:20px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <h2 style="font-size:18px;">Daemon Logs</h2>
-        <button onclick="document.getElementById('logModal').style.display='none'"
-          style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;">
-          ✕ Close
-        </button>
-      </div>
-      <pre id="logContent" style="background:var(--bg-card);padding:16px;border-radius:12px;font-size:12px;color:var(--text-secondary);white-space:pre-wrap;word-break:break-all;max-height:70vh;overflow-y:auto;border:1px solid var(--border);"></pre>
+  <div class="log-modal" id="logModal">
+    <div class="top">
+      <h2>Logs</h2>
+      <button class="close" onclick="document.getElementById('logModal').style.display='none'">✕ Close</button>
     </div>
+    <pre id="logContent"></pre>
   </div>
 
   <script>
-    /* ══════════════════════════════════════════════════════════════════════════
-     *  PATHS
-     * ═════════════════════════════════════════════════════════════════════════ */
-    const CFG    = '/data/adb/3swipe/config.prop';
-    const PID    = '/data/adb/3swipe/daemon.pid';
-    const LOG    = '/data/adb/3swipe/daemon.log';
-    const LAUNCH = '/data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh';
+    const CFG='/data/adb/3swipe/config.prop',PID_F='/data/adb/3swipe/daemon.pid',LOG='/data/adb/3swipe/daemon.log',LAUNCH='/data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh';
 
-    /* ══════════════════════════════════════════════════════════════════════════
-     *  SHELL EXEC — KernelSU Promise-based API with timeout safety
-     * ═════════════════════════════════════════════════════════════════════════ */
-    function withTimeout(promise, ms) {
-      return Promise.race([
-        promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
-      ]);
+    function withTimeout(p,ms){return Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))])}
+
+    async function exec(cmd){
+      try{
+        if(typeof ksu!=='undefined'&&typeof ksu.exec==='function'){const r=await withTimeout(ksu.exec(cmd),15000);return{out:r.stdout||'',err:r.stderr||'',code:r.errno||0}}
+        if(typeof kernelsu!=='undefined'&&typeof kernelsu.exec==='function'){const r=await withTimeout(kernelsu.exec(cmd),15000);return{out:r.stdout||r.output||'',err:r.stderr||'',code:r.errno||0}}
+        return{out:'',err:'No shell API',code:1}
+      }catch(e){return{out:'',err:e.message,code:1}}
     }
 
-    async function exec(cmd) {
-      try {
-        if (typeof ksu !== 'undefined' && typeof ksu.exec === 'function') {
-          const r = await withTimeout(ksu.exec(cmd), 15000);
-          return { out: r.stdout || '', err: r.stderr || '', code: r.errno || 0 };
-        }
-        if (typeof kernelsu !== 'undefined' && typeof kernelsu.exec === 'function') {
-          const r = await withTimeout(kernelsu.exec(cmd), 15000);
-          return { out: r.stdout || r.output || '', err: r.stderr || '', code: r.errno || 0 };
-        }
-        return { out: '', err: 'No KernelSU shell API found', code: 1 };
-      } catch (e) {
-        return { out: '', err: e.message, code: 1 };
-      }
+    let toastT;
+    function toast(m,ms=2500){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),ms)}
+
+    let ldT;
+    function loading(on){clearTimeout(ldT);const e=document.getElementById('loadingOverlay');if(on){e.classList.add('show');ldT=setTimeout(()=>{e.classList.remove('show');toast('Timed out')},10000)}else e.classList.remove('show')}
+
+    function updateRange(id,did,u){document.getElementById(did).textContent=document.getElementById(id).value+u}
+
+    async function readConfig(){
+      const r=await exec('cat "'+CFG+'" 2>/dev/null');const c={};
+      (r.out||'').split('\n').forEach(l=>{l=l.trim();if(!l||l[0]==='#')return;const i=l.indexOf('=');if(i>0)c[l.substring(0,i).trim()]=l.substring(i+1).trim()});
+      return c
     }
 
-    /* ── Toast ─────────────────────────────────────────────────────────────── */
-    let toastTimer;
-    function toast(msg, ms = 2500) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+    async function saveSetting(k,v){
+      await exec('grep -q "^'+k+'=" "'+CFG+'" 2>/dev/null && sed -i "s|^'+k+'=.*|'+k+'='+v+'|" "'+CFG+'" || echo "'+k+'='+v+'" >> "'+CFG+'"');
+      toast(k.replace(/_/g,' ')+' → '+v)
     }
 
-    /* ── Loading ──────────────────────────────────────────────────────────── */
-    let loadingTimer;
-    function loading(on) {
-      clearTimeout(loadingTimer);
-      const el = document.getElementById('loadingOverlay');
-      if (on) {
-        el.classList.add('show');
-        loadingTimer = setTimeout(() => { el.classList.remove('show'); toast('Operation timed out'); }, 10000);
-      } else {
-        el.classList.remove('show');
-      }
+    function updateBanner(on){
+      const b=document.getElementById('statusBanner');b.className='status '+(on?'on':'off');
+      document.getElementById('statusTitle').textContent=on?'Active':'Disabled';
+      document.getElementById('statusDesc').textContent=on?'Listening for gestures':'Gesture detection off'
     }
 
-    /* ── Range display helper ─────────────────────────────────────────────── */
-    function updateRange(inputId, displayId, unit) {
-      document.getElementById(displayId).textContent = document.getElementById(inputId).value + unit;
-    }
-
-    /* ══════════════════════════════════════════════════════════════════════════
-     *  CONFIG helpers
-     * ═════════════════════════════════════════════════════════════════════════ */
-    async function readConfig() {
-      const r = await exec('cat "' + CFG + '" 2>/dev/null');
-      const cfg = {};
-      (r.out || '').split('\n').forEach(l => {
-        l = l.trim();
-        if (!l || l.startsWith('#')) return;
-        const i = l.indexOf('=');
-        if (i > 0) cfg[l.substring(0, i).trim()] = l.substring(i + 1).trim();
-      });
-      return cfg;
-    }
-
-    async function saveSetting(key, val) {
-      await exec(
-        'grep -q "^' + key + '=" "' + CFG + '" 2>/dev/null && ' +
-        'sed -i "s|^' + key + '=.*|' + key + '=' + val + '|" "' + CFG + '" || ' +
-        'echo "' + key + '=' + val + '" >> "' + CFG + '"'
-      );
-      toast(key.replace(/_/g, ' ') + ' → ' + val);
-    }
-
-    /* ══════════════════════════════════════════════════════════════════════════
-     *  ACTIONS
-     * ═════════════════════════════════════════════════════════════════════════ */
-    function updateBanner(active) {
-      const b = document.getElementById('statusBanner');
-      b.className = 'status-banner ' + (active ? 'active' : 'inactive');
-      document.getElementById('statusTitle').textContent = active ? 'Module Active' : 'Module Disabled';
-      document.getElementById('statusDesc').textContent  = active
-        ? 'Listening for 3-finger swipe gestures'
-        : 'Gesture detection is turned off';
-    }
-
-    async function toggleFeature(on) {
+    async function toggleFeature(on){
       loading(true);
-      try {
-        await saveSetting('enabled', on ? '1' : '0');
-        updateBanner(on);
-        if (on) {
-          await exec('sh "' + LAUNCH + '" restart');
-          toast('Enabled — daemon started');
-        } else {
-          await exec('sh "' + LAUNCH + '" stop');
-          toast('Disabled — daemon stopped');
-        }
-        setTimeout(checkDaemon, 2000);
-      } finally { loading(false); }
+      try{
+        await saveSetting('enabled',on?'1':'0');updateBanner(on);
+        if(on){await exec('sh "'+LAUNCH+'" restart');toast('Enabled')}
+        else{await exec('sh "'+LAUNCH+'" stop');toast('Disabled')}
+        setTimeout(checkDaemon,2000)
+      }finally{loading(false)}
     }
 
-    async function restartDaemon() {
+    async function restartDaemon(){
       loading(true);
-      try {
-        await saveSetting('enabled', '1');
-        document.getElementById('toggleEnabled').checked = true;
-        updateBanner(true);
-        await exec('sh "' + LAUNCH + '" restart');
-        toast('Daemon restarted');
-        setTimeout(checkDaemon, 3000);
-      } finally { loading(false); }
+      try{
+        await saveSetting('enabled','1');document.getElementById('toggleEnabled').checked=true;updateBanner(true);
+        await exec('sh "'+LAUNCH+'" restart');toast('Restarted');setTimeout(checkDaemon,3000)
+      }finally{loading(false)}
     }
 
-    async function testScreenshot() {
+    async function testScreenshot(){
       loading(true);
-      try {
-        // Use screencap directly — the only method proven reliable across all ROMs
-        const ts = new Date().toISOString().replace(/[-:T.Z]/g,'').substring(0,14);
-        const fname = 'Screenshot_' + ts + '.png';
-        const fpath = '/sdcard/Pictures/Screenshots/' + fname;
+      try{
+        const ts=new Date().toISOString().replace(/[-:T.Z]/g,'').substring(0,14);
+        const f='/sdcard/Pictures/Screenshots/Screenshot_'+ts+'.png';
         await exec('mkdir -p /sdcard/Pictures/Screenshots');
-        await exec('screencap -p "' + fpath + '"');
-        await exec('chmod 0644 "' + fpath + '"');
-        // Register in Gallery
-        await exec('am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://' + fpath + '" --user 0');
-        toast('Screenshot saved!');
-      } finally { loading(false); }
+        await exec('screencap -p "'+f+'"');await exec('chmod 0644 "'+f+'"');
+        await exec('am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://'+f+'" --user 0');
+        toast('Screenshot saved!')
+      }finally{loading(false)}
     }
 
-    async function viewLogs() {
+    async function viewLogs(){
       loading(true);
-      try {
-        const r = await exec('tail -n 150 "' + LOG + '" 2>/dev/null || echo "No logs found"');
-        document.getElementById('logContent').textContent = r.out || 'No log data available';
-        document.getElementById('logModal').style.display = 'block';
-      } finally { loading(false); }
+      try{const r=await exec('tail -n 150 "'+LOG+'" 2>/dev/null || echo "No logs"');document.getElementById('logContent').textContent=r.out||'No data';document.getElementById('logModal').style.display='block'}
+      finally{loading(false)}
     }
 
-    async function clearLogs() {
-      await exec('echo "" > "' + LOG + '"');
-      toast('Logs cleared');
+    async function clearLogs(){await exec('echo "" > "'+LOG+'"');toast('Logs cleared')}
+
+    async function checkDaemon(){
+      try{
+        const r=await exec('cat '+PID_F+' 2>/dev/null');const pid=(r.out||'').trim().replace(/[^0-9]/g,'');
+        const pe=document.getElementById('daemonPid'),se=document.getElementById('daemonStatus');
+        if(pid){
+          const c=await exec('[ -d /proc/'+pid+' ] && echo R || echo S');const ok=(c.out||'').indexOf('R')>=0;
+          pe.textContent=pid;se.textContent=ok?'Running':'Stopped';se.style.color=ok?'var(--green)':'var(--red)'
+        }else{pe.textContent='—';se.textContent='Not running';se.style.color='var(--red)'}
+      }catch(e){document.getElementById('daemonStatus').textContent='Error';document.getElementById('daemonStatus').style.color='var(--red)'}
     }
 
-    async function checkDaemon() {
-      try {
-        const pidR = await exec('cat ' + PID + ' 2>/dev/null');
-        const pid = (pidR.out || '').trim().replace(/[^0-9]/g, '');
-        const pidEl = document.getElementById('daemonPid');
-        const stEl  = document.getElementById('daemonStatus');
-
-        if (pid && pid.length > 0) {
-          const chk = await exec('if [ -d /proc/' + pid + ' ]; then echo RUNNING; else echo STOPPED; fi');
-          const alive = (chk.out || '').indexOf('RUNNING') >= 0;
-          pidEl.textContent = pid;
-          stEl.textContent = alive ? '● Running' : '○ Stopped';
-          stEl.style.color = alive ? 'var(--success)' : 'var(--danger)';
-        } else {
-          pidEl.textContent = '—';
-          stEl.textContent = '○ Not running';
-          stEl.style.color = 'var(--danger)';
-        }
-      } catch(e) {
-        document.getElementById('daemonStatus').textContent = '? Error';
-        document.getElementById('daemonStatus').style.color = 'var(--warning)';
-      }
+    async function init(){
+      const c=await readConfig();
+      const on=c.enabled!=='0';document.getElementById('toggleEnabled').checked=on;updateBanner(on);
+      if(c.swipe_direction)document.getElementById('swipeDirection').value=c.swipe_direction;
+      if(c.swipe_threshold){document.getElementById('sensitivity').value=c.swipe_threshold;document.getElementById('sensVal').textContent=c.swipe_threshold+'px'}
+      document.getElementById('toggleVibration').checked=c.vibration!=='0';
+      document.getElementById('toggleDebug').checked=c.debug_log==='1';
+      checkDaemon();setInterval(checkDaemon,15000)
     }
 
-    /* ── Detect which screenshot method works on this device ──────────────── */
-    async function detectMethod() {
-      const el = document.getElementById('ssMethod');
-      const r = await exec('grep -o "screenshot triggered.*" "' + LOG + '" 2>/dev/null | tail -1');
-      const line = (r.out || '').trim();
-      if (line.indexOf('shell user') >= 0) {
-        el.textContent = 'Native (shell)';
-        el.style.color = 'var(--success)';
-      } else if (line.indexOf('secontext') >= 0) {
-        el.textContent = 'Native (SELinux)';
-        el.style.color = 'var(--success)';
-      } else if (line.indexOf('root') >= 0) {
-        el.textContent = 'Native (root)';
-        el.style.color = 'var(--success)';
-      } else if (line.indexOf('nsenter') >= 0) {
-        el.textContent = 'Native (nsenter)';
-        el.style.color = 'var(--success)';
-      } else {
-        const f = await exec('grep -c "falling back to screencap" "' + LOG + '" 2>/dev/null');
-        if (parseInt(f.out) > 0) {
-          el.textContent = 'Screencap (fallback)';
-          el.style.color = 'var(--warning)';
-        } else {
-          el.textContent = 'Not yet detected';
-          el.style.color = 'var(--text-secondary)';
-        }
-      }
-    }
-
-    /* ══════════════════════════════════════════════════════════════════════════
-     *  INIT — apply saved config to UI
-     * ═════════════════════════════════════════════════════════════════════════ */
-    async function init() {
-      const c = await readConfig();
-
-      const on = c.enabled !== '0';
-      document.getElementById('toggleEnabled').checked = on;
-      updateBanner(on);
-
-      if (c.swipe_direction) document.getElementById('swipeDirection').value = c.swipe_direction;
-      if (c.swipe_threshold) {
-        document.getElementById('sensitivity').value = c.swipe_threshold;
-        document.getElementById('sensitivityVal').textContent = c.swipe_threshold + 'px';
-      }
-      if (c.cooldown) {
-        document.getElementById('cooldown').value = c.cooldown;
-        document.getElementById('cooldownVal').textContent = c.cooldown + 's';
-      }
-      document.getElementById('toggleVibration').checked = c.vibration !== '0';
-      document.getElementById('toggleDebug').checked = c.debug_log === '1';
-
-      checkDaemon();
-      detectMethod();
-      setInterval(checkDaemon, 15000);
-    }
-
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded',init);
   </script>
 </body>
 </html>
