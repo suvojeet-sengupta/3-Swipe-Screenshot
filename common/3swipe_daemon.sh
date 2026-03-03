@@ -13,7 +13,7 @@
 ###############################################################################
 
 # ─── Paths ───────────────────────────────────────────────────────────────────
-MODULE_DIR="/data/adb/modules/3swipe"
+MODULE_DIR="/data/adb/modules/three_swipe_screenshot"
 DATA_DIR="/data/adb/3swipe"
 CONFIG="$DATA_DIR/config.prop"
 LOG_FILE="$DATA_DIR/daemon.log"

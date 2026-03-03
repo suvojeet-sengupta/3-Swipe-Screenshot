@@ -88,7 +88,7 @@ Edit the config file directly:
 ## 🗂️ File Structure
 
 ```
-3swipe/
+three_swipe_screenshot/
 ├── module.prop              # Module metadata
 ├── META-INF/                # Magisk installer
 │   └── com/google/android/
