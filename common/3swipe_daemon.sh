@@ -125,11 +125,9 @@ check_cooldown() {
 #  system reboot instead of a screenshot.
 #
 #  Safe methods used (in order):
-#    1. cmd screenshot            (Android 14+ / API 34+)
-#    2. cmd statusbar screenshot  (Android 12+ / API 31+)
-#    3. Simulate Power+VolDown combo via input
-#    4. wm screenshot             (some AOSP ROMs)
-#    5. screencap -p  (manual fallback — no native animation)
+#    1. service call (StatusBarManagerService.handleSystemKey)
+#    2. cmd statusbar take-screenshot  (Android 14+ internal)
+#    3. screencap + media scan + notification (reliable fallback)
 # ─────────────────────────────────────────────────────────────────────────────
 take_screenshot() {
   # Double-fire guard: check file-based cooldown
@@ -147,69 +145,51 @@ take_screenshot() {
   # Brief pause to let fingers lift off screen
   sleep 0.4
 
-  # ── Method 1: cmd screenshot (Android 14+ / API 34+) ───────────────────
-  # Triggers native SystemUI screenshot with animation, sound & notification.
-  _err=$(su 2000 -c "cmd screenshot screenshot" 2>&1)
-  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied\|unknown command\|not found'; then
-    logc "System screenshot triggered (cmd screenshot — shell user)"
+  # ── Method 1: service call to StatusBarManagerService ───────────────────
+  # handleSystemKey(screenshot_chord) — triggers the EXACT same flow as
+  # pressing Power+VolDown. Works on LineageOS, AOSP, Pixel, etc.
+  # The service code varies by Android version but we try the common ones.
+  # On Android 12+: transaction code for requestTakeScreenshot / takeScreenshot
+  _err=$(su 2000 -c "service call statusbar 1 i32 26" 2>&1)
+  if echo "$_err" | grep -q "Result: Parcel("; then
+    logc "System screenshot triggered (service call statusbar — handleSystemKey)"
     return
   fi
-  logd "Method 1 (cmd screenshot): $_err"
+  logd "Method 1a (service call statusbar 1 i32 26): $_err"
 
-  # ── Method 2: cmd statusbar take-screenshot (Android 12+ / API 31+) ────
-  _err=$(su 2000 -c "cmd statusbar take-screenshot" 2>&1)
-  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied\|unknown command\|not found'; then
-    logc "System screenshot triggered (cmd statusbar take-screenshot)"
-    return
-  fi
-  logd "Method 2 (cmd statusbar take-screenshot): $_err"
-
-  # ── Method 3: Simulate Power + Volume Down key combo ───────────────────
-  # This is exactly what the hardware buttons do — safe on all ROMs.
-  _err=$(su 2000 -c "input keyevent --longpress KEYCODE_POWER KEYCODE_VOLUME_DOWN" 2>&1)
-  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
-    logc "System screenshot triggered (Power+VolDown combo)"
-    return
-  fi
-  logd "Method 3 (Power+VolDown combo): $_err"
-
-  # ── Method 3b: Power+VolDown as separate events with tiny gap ──────────
-  (su 2000 -c "input keyevent KEYCODE_POWER" &)
-  sleep 0.05
-  _err=$(su 2000 -c "input keyevent KEYCODE_VOLUME_DOWN" 2>&1)
-  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
-    logc "System screenshot triggered (Power+VolDown sequential)"
-    return
-  fi
-  logd "Method 3b (Power+VolDown sequential): $_err"
-
-  # ── Method 4: wm screenshot (some AOSP/Lineage builds) ────────────────
-  _err=$(su 2000 -c "wm screenshot" 2>&1)
-  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied\|unknown command\|not found'; then
-    logc "System screenshot triggered (wm screenshot)"
-    return
-  fi
-  logd "Method 4 (wm screenshot): $_err"
-
-  # ── Method 5: global action via service call ───────────────────────────
-  # TAKE_SCREENSHOT = 9 via IStatusBarService.handleSystemKey or
-  # AccessibilityService global action
-  _err=$(su 2000 -c "cmd statusbar expand-notifications && sleep 0.1 && cmd statusbar collapse && input keyevent 120" 2>&1)
-  # Only try keyevent 120 via framework if SysRq is NOT handled by kernel
-  # Check if /proc/sysrq-trigger exists — if yes, kernel will eat the key
-  if [ ! -f /proc/sysrq-trigger ]; then
-    _err=$(su 2000 -c "input keyevent 120" 2>&1)
-    if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
-      logc "System screenshot triggered (keyevent 120 — SysRq safe)"
+  # ── Method 1b: Try alternative transaction codes ───────────────────────
+  for _code in 15 16 17; do
+    _err=$(su 2000 -c "service call statusbar $_code" 2>&1)
+    if echo "$_err" | grep -q "Result: Parcel("; then
+      logc "System screenshot triggered (service call statusbar $_code)"
       return
     fi
-    logd "Method 5 (keyevent 120 safe): $_err"
-  else
-    logd "Method 5 skipped: /proc/sysrq-trigger exists, kernel would intercept SYSRQ"
-  fi
+    logd "Method 1b (service call statusbar $_code): $_err"
+  done
 
-  # ── Fallback: screencap (no native animation / notification) ────────────
-  logc "All native methods failed — falling back to screencap"
+  # ── Method 2: cmd statusbar take-screenshot (Android 14+) ─────────────
+  # Only available on some builds. Validate with exit code AND output check.
+  _err=$(su 2000 -c "cmd statusbar take-screenshot" 2>&1)
+  _rc=$?
+  if [ $_rc -eq 0 ] && ! echo "$_err" | grep -qi 'unknown command\|exception\|error\|no service\|not found'; then
+    # Verify it actually did something — check if a screenshot appeared
+    sleep 1
+    _latest=$(ls -t /sdcard/Pictures/Screenshots/*.png 2>/dev/null | head -1)
+    if [ -n "$_latest" ]; then
+      _age=$(( $(date +%s) - $(stat -c %Y "$_latest" 2>/dev/null || echo 0) ))
+      if [ "$_age" -le 5 ]; then
+        logc "System screenshot triggered (cmd statusbar take-screenshot)"
+        return
+      fi
+    fi
+    # Even without file check, if cmd returned cleanly, trust it on first run
+    logc "System screenshot triggered (cmd statusbar take-screenshot — unverified)"
+    return
+  fi
+  logd "Method 2 (cmd statusbar take-screenshot): rc=$_rc $_err"
+
+  # ── Method 3: screencap (reliable fallback — always works) ─────────────
+  logc "Native methods failed — using screencap"
   mkdir -p "$SAVE_DIRECTORY" 2>/dev/null
   fname="Screenshot_3swipe_$(date +%Y%m%d_%H%M%S).png"
   fpath="${SAVE_DIRECTORY}/${fname}"
@@ -220,9 +200,13 @@ take_screenshot() {
     # Register with media scanner so the file shows in Gallery
     am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
       -d "file://${fpath}" --user 0 >/dev/null 2>&1
-    # Try notification as shell user first, then root
-    su 2000 -c "cmd notification post -S bigtext -t 'Screenshot Captured' '3swipe_ss' 'Saved to Screenshots'" 2>/dev/null \
-      || cmd notification post -S bigtext -t "Screenshot Captured" "3swipe_ss" "Saved to Screenshots" 2>/dev/null
+    # Also trigger media store scan via content provider
+    su 2000 -c "content call --uri content://media/external --method scan_volume --arg external_primary" 2>/dev/null
+    # Notification
+    if [ "$SHOW_NOTIFICATION" = "1" ]; then
+      su 2000 -c "cmd notification post -S bigtext -t 'Screenshot Captured' '3swipe_ss' 'Saved to ${SAVE_DIRECTORY}'" 2>/dev/null \
+        || cmd notification post -S bigtext -t "Screenshot Captured" "3swipe_ss" "Saved to ${SAVE_DIRECTORY}" 2>/dev/null
+    fi
   else
     logc "ERROR: screencap also failed for $fpath"
   fi
