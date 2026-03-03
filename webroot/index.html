@@ -653,30 +653,16 @@
     async function testScreenshot() {
       loading(true);
       try {
-        // Try safe methods in order — AVOID keyevent 120 (SYSRQ causes reboot on LineageOS)
-        let ok = false;
-
-        // Method 1: service call statusbar (handleSystemKey — triggers native screenshot)
-        let r = await exec('su 2000 -c "service call statusbar 1 i32 26" 2>&1');
-        let out = (r.out || '') + (r.err || '');
-        if (/Result: Parcel\(/i.test(out)) { ok = true; }
-
-        // Method 2: cmd statusbar take-screenshot
-        if (!ok) {
-          r = await exec('su 2000 -c "cmd statusbar take-screenshot" 2>&1');
-          out = (r.out || '') + (r.err || '');
-          if (r.code === 0 && !/unknown command|exception|error|not found/i.test(out)) { ok = true; }
-        }
-
-        // Method 3: screencap fallback (always works)
-        if (!ok) {
-          const ts = new Date().toISOString().replace(/[-:T]/g,'').substring(0,15);
-          await exec('screencap -p "/sdcard/Pictures/Screenshots/Screenshot_3swipe_' + ts + '.png"');
-          await exec('am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file:///sdcard/Pictures/Screenshots/Screenshot_3swipe_' + ts + '.png" --user 0');
-          ok = true;
-        }
-
-        toast(ok ? 'Screenshot taken!' : 'Screenshot failed');
+        // Use screencap directly — the only method proven reliable across all ROMs
+        const ts = new Date().toISOString().replace(/[-:T.Z]/g,'').substring(0,14);
+        const fname = 'Screenshot_' + ts + '.png';
+        const fpath = '/sdcard/Pictures/Screenshots/' + fname;
+        await exec('mkdir -p /sdcard/Pictures/Screenshots');
+        await exec('screencap -p "' + fpath + '"');
+        await exec('chmod 0644 "' + fpath + '"');
+        // Register in Gallery
+        await exec('am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://' + fpath + '" --user 0');
+        toast('Screenshot saved!');
       } finally { loading(false); }
     }
 

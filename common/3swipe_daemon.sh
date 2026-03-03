@@ -114,20 +114,18 @@ check_cooldown() {
 }
 
 # ── Take screenshot ──────────────────────────────────────────────────────────
-#  Tries multiple methods to trigger the NATIVE system screenshot so Android
-#  handles the screenshot animation, notification, sound, and gallery entry
-#  exactly like pressing Power+VolumeDown.  Falls back to screencap only if
-#  every native method fails.
+#  Uses screencap as the PRIMARY reliable method — it works on every Android
+#  device regardless of ROM, Android version, or SELinux policy.
 #
-#  IMPORTANT: keyevent 120 (SYSRQ) is deliberately AVOIDED because on
-#  LineageOS and other kernels with CONFIG_MAGIC_SYSRQ=y, the kernel
-#  intercepts the SysRq key before Android sees it — causing a full
-#  system reboot instead of a screenshot.
+#  Previous approaches that FAILED on LineageOS:
+#    - keyevent 120 (SYSRQ) → kernel reboot (CONFIG_MAGIC_SYSRQ=y)
+#    - cmd screenshot screenshot → fake command, silently does nothing
+#    - service call statusbar → returns Parcel but wrong transaction code
 #
-#  Safe methods used (in order):
-#    1. service call (StatusBarManagerService.handleSystemKey)
-#    2. cmd statusbar take-screenshot  (Android 14+ internal)
-#    3. screencap + media scan + notification (reliable fallback)
+#  screencap -p is guaranteed to work as root. We add:
+#    - Media scanner broadcast so the file appears in Gallery immediately
+#    - Notification so the user knows it was captured
+#    - Vibration feedback
 # ─────────────────────────────────────────────────────────────────────────────
 take_screenshot() {
   # Double-fire guard: check file-based cooldown
@@ -145,74 +143,43 @@ take_screenshot() {
   # Brief pause to let fingers lift off screen
   sleep 0.4
 
-  # ── Method 1: service call to StatusBarManagerService ───────────────────
-  # handleSystemKey(screenshot_chord) — triggers the EXACT same flow as
-  # pressing Power+VolDown. Works on LineageOS, AOSP, Pixel, etc.
-  # The service code varies by Android version but we try the common ones.
-  # On Android 12+: transaction code for requestTakeScreenshot / takeScreenshot
-  _err=$(su 2000 -c "service call statusbar 1 i32 26" 2>&1)
-  if echo "$_err" | grep -q "Result: Parcel("; then
-    logc "System screenshot triggered (service call statusbar — handleSystemKey)"
-    return
-  fi
-  logd "Method 1a (service call statusbar 1 i32 26): $_err"
-
-  # ── Method 1b: Try alternative transaction codes ───────────────────────
-  for _code in 15 16 17; do
-    _err=$(su 2000 -c "service call statusbar $_code" 2>&1)
-    if echo "$_err" | grep -q "Result: Parcel("; then
-      logc "System screenshot triggered (service call statusbar $_code)"
-      return
-    fi
-    logd "Method 1b (service call statusbar $_code): $_err"
-  done
-
-  # ── Method 2: cmd statusbar take-screenshot (Android 14+) ─────────────
-  # Only available on some builds. Validate with exit code AND output check.
-  _err=$(su 2000 -c "cmd statusbar take-screenshot" 2>&1)
-  _rc=$?
-  if [ $_rc -eq 0 ] && ! echo "$_err" | grep -qi 'unknown command\|exception\|error\|no service\|not found'; then
-    # Verify it actually did something — check if a screenshot appeared
-    sleep 1
-    _latest=$(ls -t /sdcard/Pictures/Screenshots/*.png 2>/dev/null | head -1)
-    if [ -n "$_latest" ]; then
-      _age=$(( $(date +%s) - $(stat -c %Y "$_latest" 2>/dev/null || echo 0) ))
-      if [ "$_age" -le 5 ]; then
-        logc "System screenshot triggered (cmd statusbar take-screenshot)"
-        return
-      fi
-    fi
-    # Even without file check, if cmd returned cleanly, trust it on first run
-    logc "System screenshot triggered (cmd statusbar take-screenshot — unverified)"
-    return
-  fi
-  logd "Method 2 (cmd statusbar take-screenshot): rc=$_rc $_err"
-
-  # ── Method 3: screencap (reliable fallback — always works) ─────────────
-  logc "Native methods failed — using screencap"
+  # ── screencap — the only truly reliable method ─────────────────────────
   mkdir -p "$SAVE_DIRECTORY" 2>/dev/null
-  fname="Screenshot_3swipe_$(date +%Y%m%d_%H%M%S).png"
+  fname="Screenshot_$(date +%Y%m%d_%H%M%S).png"
   fpath="${SAVE_DIRECTORY}/${fname}"
+
   screencap -p "$fpath" 2>/dev/null
-  if [ -f "$fpath" ]; then
+
+  if [ -f "$fpath" ] && [ "$(wc -c < "$fpath")" -gt 0 ]; then
     chmod 0644 "$fpath"
-    logc "Saved: $fpath"
-    # Register with media scanner so the file shows in Gallery
+    logc "Screenshot saved: $fpath"
+
+    # ── Make it visible in Gallery ────────────────────────────────────────
+    # Method 1: MEDIA_SCANNER_SCAN_FILE broadcast
     am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
       -d "file://${fpath}" --user 0 >/dev/null 2>&1
-    # Also trigger media store scan via content provider
-    su 2000 -c "content call --uri content://media/external --method scan_volume --arg external_primary" 2>/dev/null
-    # Notification
-    if [ "$SHOW_NOTIFICATION" = "1" ]; then
-      su 2000 -c "cmd notification post -S bigtext -t 'Screenshot Captured' '3swipe_ss' 'Saved to ${SAVE_DIRECTORY}'" 2>/dev/null \
-        || cmd notification post -S bigtext -t "Screenshot Captured" "3swipe_ss" "Saved to ${SAVE_DIRECTORY}" 2>/dev/null
-    fi
-  else
-    logc "ERROR: screencap also failed for $fpath"
-  fi
 
-  # Vibration feedback (only needed for screencap — native methods vibrate on their own)
-  do_vibrate
+    # Method 2: MediaStore insert via content provider (more reliable on Android 11+)
+    su 2000 -c "content insert --uri content://media/external/images/media \
+      --bind _display_name:s:${fname} \
+      --bind mime_type:s:image/png \
+      --bind relative_path:s:Pictures/Screenshots \
+      --bind _data:s:${fpath}" 2>/dev/null
+
+    # Method 3: Trigger full volume scan as fallback
+    su 2000 -c "content call --uri content://media/external --method scan_volume --arg external_primary" 2>/dev/null
+
+    # ── Notification ─────────────────────────────────────────────────────
+    if [ "$SHOW_NOTIFICATION" = "1" ]; then
+      su 2000 -c "cmd notification post -S bigtext -t 'Screenshot Captured' '3swipe_ss' 'Saved to Screenshots'" 2>/dev/null \
+        || cmd notification post -S bigtext -t "Screenshot Captured" "3swipe_ss" "Saved to Screenshots" 2>/dev/null
+    fi
+
+    # ── Vibration feedback ───────────────────────────────────────────────
+    do_vibrate
+  else
+    logc "ERROR: screencap failed for $fpath"
+  fi
 }
 
 # ── Kill previous instance ───────────────────────────────────────────────────
