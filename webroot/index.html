@@ -23,13 +23,7 @@
       --radius: 16px;
       --radius-sm: 10px;
     }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
       background: var(--bg-primary);
@@ -39,7 +33,7 @@
       overflow-x: hidden;
     }
 
-    /* ── Header ─────────────────────────────── */
+    /* ── Header ────────────────────────── */
     .header {
       background: linear-gradient(135deg, var(--bg-secondary) 0%, #1e1e35 100%);
       padding: 28px 20px 24px;
@@ -47,142 +41,76 @@
       position: relative;
       overflow: hidden;
     }
-
     .header::before {
       content: '';
       position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 300px;
-      height: 300px;
+      top: -50%; right: -20%;
+      width: 300px; height: 300px;
       background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
       pointer-events: none;
     }
-
-    .header-content {
-      position: relative;
-      z-index: 1;
-    }
-
-    .header-top {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 8px;
-    }
-
+    .header-content { position: relative; z-index: 1; }
+    .header-top { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
     .header-icon {
-      width: 48px;
-      height: 48px;
+      width: 48px; height: 48px;
       background: linear-gradient(135deg, var(--accent), #5a4ed4);
       border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       font-size: 24px;
       box-shadow: 0 4px 20px var(--accent-glow);
     }
-
-    .header h1 {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-    }
-
-    .header .subtitle {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
+    .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+    .header .subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
     .header .version-badge {
       display: inline-block;
       background: rgba(124, 106, 255, 0.15);
       color: var(--accent-light);
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      margin-top: 10px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; margin-top: 10px;
       border: 1px solid rgba(124, 106, 255, 0.2);
     }
 
-    /* ── Status Banner ──────────────────────── */
+    /* ── Status Banner ─────────────────── */
     .status-banner {
       margin: 16px;
       padding: 16px 18px;
       border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      gap: 14px;
+      display: flex; align-items: center; gap: 14px;
       transition: all 0.4s ease;
     }
-
     .status-banner.active {
       background: linear-gradient(135deg, rgba(61, 214, 140, 0.12), rgba(61, 214, 140, 0.05));
       border: 1px solid rgba(61, 214, 140, 0.2);
     }
-
     .status-banner.inactive {
       background: linear-gradient(135deg, rgba(255, 90, 122, 0.12), rgba(255, 90, 122, 0.05));
       border: 1px solid rgba(255, 90, 122, 0.2);
     }
-
-    .status-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
+    .status-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
     .status-banner.active .status-dot {
       background: var(--success);
       box-shadow: 0 0 12px rgba(61, 214, 140, 0.5);
       animation: pulse 2s ease-in-out infinite;
     }
-
     .status-banner.inactive .status-dot {
       background: var(--danger);
       box-shadow: 0 0 12px rgba(255, 90, 122, 0.3);
     }
-
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.6; transform: scale(0.85); }
     }
+    .status-text h3 { font-size: 14px; font-weight: 600; }
+    .status-text p  { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 
-    .status-text h3 {
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .status-text p {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
-    /* ── Container ──────────────────────────── */
-    .container {
-      padding: 0 16px 100px;
-    }
-
-    /* ── Section ────────────────────────────── */
-    .section {
-      margin-bottom: 20px;
-    }
-
+    /* ── Container / Section / Card ──── */
+    .container { padding: 0 16px 100px; }
+    .section { margin-bottom: 20px; }
     .section-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      padding: 0 4px;
-      margin-bottom: 10px;
+      font-size: 12px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 1.2px;
+      padding: 0 4px; margin-bottom: 10px;
     }
-
-    /* ── Card ───────────────────────────────── */
     .card {
       background: var(--bg-card);
       border-radius: var(--radius);
@@ -190,363 +118,159 @@
       overflow: hidden;
     }
 
-    /* ── Setting Row ────────────────────────── */
+    /* ── Setting Row ───────────────────── */
     .setting-row {
       padding: 16px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
       border-bottom: 1px solid var(--border);
       transition: background 0.2s;
     }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-row:active { background: var(--bg-card-hover); }
+    .setting-info { flex: 1; min-width: 0; }
+    .setting-label { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+    .setting-desc { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
 
-    .setting-row:last-child {
-      border-bottom: none;
-    }
-
-    .setting-row:active {
-      background: var(--bg-card-hover);
-    }
-
-    .setting-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .setting-label {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .setting-desc {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 3px;
-      line-height: 1.4;
-    }
-
-    /* ── Toggle Switch ──────────────────────── */
-    .toggle {
-      position: relative;
-      width: 52px;
-      height: 30px;
-      flex-shrink: 0;
-    }
-
-    .toggle input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
+    /* ── Toggle Switch ─────────────────── */
+    .toggle { position: relative; width: 52px; height: 30px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
     .toggle-slider {
-      position: absolute;
-      inset: 0;
-      background: #3a3a52;
-      border-radius: 30px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: absolute; inset: 0;
+      background: #3a3a52; border-radius: 30px;
+      cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     .toggle-slider::before {
-      content: '';
-      position: absolute;
-      width: 24px;
-      height: 24px;
-      background: white;
-      border-radius: 50%;
-      top: 3px;
-      left: 3px;
+      content: ''; position: absolute;
+      width: 24px; height: 24px; background: white; border-radius: 50%;
+      top: 3px; left: 3px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
-
     .toggle input:checked + .toggle-slider {
       background: var(--accent);
       box-shadow: 0 0 16px var(--accent-glow);
     }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(22px); }
 
-    .toggle input:checked + .toggle-slider::before {
-      transform: translateX(22px);
-    }
-
-    /* ── Select ─────────────────────────────── */
+    /* ── Select ────────────────────────── */
     .setting-select {
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 8px 12px;
-      font-size: 13px;
-      font-family: inherit;
-      cursor: pointer;
-      min-width: 100px;
-      appearance: none;
-      -webkit-appearance: none;
+      background: var(--bg-primary); color: var(--text-primary);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 8px 12px; font-size: 13px; font-family: inherit;
+      cursor: pointer; min-width: 100px;
+      -webkit-appearance: none; appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239898b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
+      background-repeat: no-repeat; background-position: right 10px center;
       padding-right: 30px;
     }
 
-    /* ── Range Slider ───────────────────────── */
-    .range-container {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 140px;
-    }
-
-    .range-value {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--accent-light);
-      min-width: 36px;
-      text-align: right;
-    }
-
+    /* ── Range Slider ──────────────────── */
+    .range-container { display: flex; align-items: center; gap: 12px; min-width: 140px; }
+    .range-value { font-size: 14px; font-weight: 600; color: var(--accent-light); min-width: 36px; text-align: right; }
     input[type="range"] {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 90px;
-      height: 4px;
-      border-radius: 4px;
-      background: #3a3a52;
-      outline: none;
+      -webkit-appearance: none; appearance: none;
+      width: 90px; height: 4px; border-radius: 4px;
+      background: #3a3a52; outline: none;
     }
-
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--accent); cursor: pointer;
       box-shadow: 0 2px 10px var(--accent-glow);
     }
 
-    /* ── Buttons ────────────────────────────── */
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-    }
-
+    /* ── Buttons ────────────────────────── */
+    .btn-group { display: flex; gap: 10px; margin-top: 16px; }
     .btn {
-      flex: 1;
-      padding: 14px;
-      border-radius: var(--radius-sm);
-      border: none;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: inherit;
+      flex: 1; padding: 14px; border-radius: var(--radius-sm);
+      border: none; font-size: 14px; font-weight: 600; font-family: inherit;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.2s;
-      -webkit-tap-highlight-color: transparent;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s; -webkit-tap-highlight-color: transparent;
     }
-
-    .btn:active {
-      transform: scale(0.97);
-    }
-
+    .btn:active { transform: scale(0.97); }
     .btn-primary {
       background: linear-gradient(135deg, var(--accent), #5a4ed4);
-      color: white;
-      box-shadow: 0 4px 16px var(--accent-glow);
+      color: white; box-shadow: 0 4px 16px var(--accent-glow);
     }
+    .btn-secondary { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-danger { background: rgba(255, 90, 122, 0.12); color: var(--danger); border: 1px solid rgba(255, 90, 122, 0.2); }
+    .btn-success { background: rgba(61, 214, 140, 0.12); color: var(--success); border: 1px solid rgba(61, 214, 140, 0.2); }
 
-    .btn-secondary {
-      background: var(--bg-card);
-      color: var(--text-primary);
-      border: 1px solid var(--border);
-    }
-
-    .btn-danger {
-      background: rgba(255, 90, 122, 0.12);
-      color: var(--danger);
-      border: 1px solid rgba(255, 90, 122, 0.2);
-    }
-
-    .btn-success {
-      background: rgba(61, 214, 140, 0.12);
-      color: var(--success);
-      border: 1px solid rgba(61, 214, 140, 0.2);
-    }
-
-    /* ── Info Card ──────────────────────────── */
+    /* ── Info Card ──────────────────────── */
     .info-card {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      padding: 18px;
+      background: var(--bg-card); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 18px;
     }
-
     .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
+      display: flex; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
     }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { color: var(--text-secondary); }
+    .info-value { color: var(--text-primary); font-weight: 500; }
 
-    .info-row:last-child {
-      border-bottom: none;
-    }
-
-    .info-key {
-      color: var(--text-secondary);
-    }
-
-    .info-value {
-      color: var(--text-primary);
-      font-weight: 500;
-    }
-
-    /* ── Toast ──────────────────────────────── */
+    /* ── Toast ──────────────────────────── */
     .toast {
-      position: fixed;
-      bottom: 80px;
-      left: 50%;
+      position: fixed; bottom: 80px; left: 50%;
       transform: translateX(-50%) translateY(100px);
-      background: var(--bg-card);
-      color: var(--text-primary);
-      padding: 12px 24px;
-      border-radius: 30px;
-      font-size: 14px;
-      font-weight: 500;
+      background: var(--bg-card); color: var(--text-primary);
+      padding: 12px 24px; border-radius: 30px;
+      font-size: 14px; font-weight: 500;
       border: 1px solid var(--border);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      opacity: 0;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 1000;
-      white-space: nowrap;
+      opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000; white-space: nowrap;
     }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    /* ── Gesture Preview ────────────────────── */
-    .gesture-preview {
-      display: flex;
-      justify-content: center;
-      padding: 24px;
-      margin: 16px 0;
-    }
-
+    /* ── Gesture Preview ───────────────── */
+    .gesture-preview { display: flex; justify-content: center; padding: 24px; margin: 16px 0; }
     .phone-frame {
-      width: 120px;
-      height: 200px;
-      border: 2px solid var(--text-muted);
-      border-radius: 18px;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 120px; height: 200px;
+      border: 2px solid var(--text-muted); border-radius: 18px;
+      position: relative; display: flex; align-items: center; justify-content: center;
       background: var(--bg-primary);
     }
-
-    .swipe-arrows {
-      display: flex;
-      gap: 10px;
-    }
-
+    .swipe-arrows { display: flex; gap: 10px; }
     .swipe-arrow {
-      width: 3px;
-      height: 60px;
+      width: 3px; height: 60px;
       background: linear-gradient(to bottom, var(--accent-light), var(--accent));
-      border-radius: 3px;
-      position: relative;
+      border-radius: 3px; position: relative;
       animation: swipeDown 2s ease-in-out infinite;
     }
-
-    .swipe-arrow:nth-child(2) {
-      animation-delay: 0.1s;
-    }
-
-    .swipe-arrow:nth-child(3) {
-      animation-delay: 0.2s;
-    }
-
+    .swipe-arrow:nth-child(2) { animation-delay: 0.1s; }
+    .swipe-arrow:nth-child(3) { animation-delay: 0.2s; }
     .swipe-arrow::after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 8px;
-      height: 8px;
-      border-right: 2px solid var(--accent);
-      border-bottom: 2px solid var(--accent);
+      content: ''; position: absolute; bottom: -2px; left: 50%;
+      width: 8px; height: 8px;
+      border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent);
       transform: translateX(-50%) rotate(45deg);
     }
-
     @keyframes swipeDown {
       0% { opacity: 0; transform: translateY(-20px); }
-      30% { opacity: 1; }
-      70% { opacity: 1; }
+      30% { opacity: 1; } 70% { opacity: 1; }
       100% { opacity: 0; transform: translateY(20px); }
     }
+    .gesture-label { text-align: center; font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
 
-    .gesture-label {
-      text-align: center;
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 8px;
-    }
+    /* ── Footer ─────────────────────────── */
+    .footer { text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 12px; line-height: 1.8; }
+    .footer .dev-name { color: var(--accent-light); font-weight: 600; }
 
-    /* ── Footer ─────────────────────────────── */
-    .footer {
-      text-align: center;
-      padding: 32px 16px;
-      color: var(--text-muted);
-      font-size: 12px;
-      line-height: 1.8;
-    }
-
-    .footer .dev-name {
-      color: var(--accent-light);
-      font-weight: 600;
-    }
-
-    /* ── Loading Overlay ────────────────────── */
+    /* ── Loading Overlay ───────────────── */
     .loading-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 15, 20, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
+      position: fixed; inset: 0; background: rgba(15,15,20,0.8);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
     }
-
-    .loading-overlay.show {
-      opacity: 1;
-      pointer-events: all;
-    }
-
+    .loading-overlay.show { opacity: 1; pointer-events: all; }
     .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--bg-card);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      width: 40px; height: 40px;
+      border: 3px solid var(--bg-card); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
     }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -561,7 +285,7 @@
           <div class="subtitle">Swipe gesture screenshot module</div>
         </div>
       </div>
-      <span class="version-badge">v2.0.0 • Suvojeet Sengupta</span>
+      <span class="version-badge">v2.1.0 • Suvojeet Sengupta</span>
     </div>
   </div>
 
@@ -621,7 +345,6 @@
             <option value="up">Up ↑</option>
           </select>
         </div>
-
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-label">Sensitivity</div>
@@ -629,11 +352,10 @@
           </div>
           <div class="range-container">
             <input type="range" id="sensitivity" min="100" max="800" step="50" value="300"
-              oninput="updateRangeDisplay('sensitivity', 'sensitivityVal', 'px'); saveSetting('swipe_threshold', this.value)">
+              oninput="updateRange('sensitivity','sensitivityVal','px'); saveSetting('swipe_threshold',this.value)">
             <span class="range-value" id="sensitivityVal">300px</span>
           </div>
         </div>
-
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-label">Screenshot Delay</div>
@@ -641,14 +363,14 @@
           </div>
           <div class="range-container">
             <input type="range" id="screenshotDelay" min="0" max="2000" step="100" value="0"
-              oninput="updateRangeDisplay('screenshotDelay', 'delayVal', 'ms'); saveSetting('screenshot_delay', this.value)">
+              oninput="updateRange('screenshotDelay','delayVal','ms'); saveSetting('screenshot_delay',this.value)">
             <span class="range-value" id="delayVal">0ms</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Feedback Settings -->
+    <!-- Feedback -->
     <div class="section">
       <div class="section-title">Feedback</div>
       <div class="card">
@@ -658,11 +380,10 @@
             <div class="setting-desc">Haptic feedback on screenshot</div>
           </div>
           <label class="toggle">
-            <input type="checkbox" id="toggleVibration" checked onchange="saveSetting('vibration', this.checked ? '1' : '0')">
+            <input type="checkbox" id="toggleVibration" checked onchange="saveSetting('vibration',this.checked?'1':'0')">
             <span class="toggle-slider"></span>
           </label>
         </div>
-
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-label">Vibration Duration</div>
@@ -670,25 +391,24 @@
           </div>
           <div class="range-container">
             <input type="range" id="vibDuration" min="10" max="200" step="10" value="50"
-              oninput="updateRangeDisplay('vibDuration', 'vibVal', 'ms'); saveSetting('vibration_duration', this.value)">
+              oninput="updateRange('vibDuration','vibVal','ms'); saveSetting('vibration_duration',this.value)">
             <span class="range-value" id="vibVal">50ms</span>
           </div>
         </div>
-
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-label">Notification</div>
             <div class="setting-desc">Show notification after capture</div>
           </div>
           <label class="toggle">
-            <input type="checkbox" id="toggleNotification" checked onchange="saveSetting('show_notification', this.checked ? '1' : '0')">
+            <input type="checkbox" id="toggleNotification" checked onchange="saveSetting('show_notification',this.checked?'1':'0')">
             <span class="toggle-slider"></span>
           </label>
         </div>
       </div>
     </div>
 
-    <!-- Screenshot Settings -->
+    <!-- Screenshot -->
     <div class="section">
       <div class="section-title">Screenshot</div>
       <div class="card">
@@ -697,12 +417,11 @@
             <div class="setting-label">Format</div>
             <div class="setting-desc">Image file format</div>
           </div>
-          <select class="setting-select" id="screenshotFormat" onchange="saveSetting('screenshot_format', this.value)">
+          <select class="setting-select" id="screenshotFormat" onchange="saveSetting('screenshot_format',this.value)">
             <option value="png">PNG</option>
             <option value="jpg">JPG</option>
           </select>
         </div>
-
         <div class="setting-row">
           <div class="setting-info">
             <div class="setting-label">Cooldown</div>
@@ -710,7 +429,7 @@
           </div>
           <div class="range-container">
             <input type="range" id="cooldown" min="1" max="10" step="1" value="2"
-              oninput="updateRangeDisplay('cooldown', 'cooldownVal', 's'); saveSetting('cooldown', this.value)">
+              oninput="updateRange('cooldown','cooldownVal','s'); saveSetting('cooldown',this.value)">
             <span class="range-value" id="cooldownVal">2s</span>
           </div>
         </div>
@@ -727,7 +446,7 @@
             <div class="setting-desc">Log daemon activity to file</div>
           </div>
           <label class="toggle">
-            <input type="checkbox" id="toggleDebug" onchange="saveSetting('debug_log', this.checked ? '1' : '0')">
+            <input type="checkbox" id="toggleDebug" onchange="saveSetting('debug_log',this.checked?'1':'0')">
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -738,20 +457,12 @@
     <div class="section">
       <div class="section-title">Actions</div>
       <div class="btn-group">
-        <button class="btn btn-primary" onclick="restartDaemon()">
-          🔄 Restart Daemon
-        </button>
-        <button class="btn btn-secondary" onclick="testScreenshot()">
-          📸 Test Shot
-        </button>
+        <button class="btn btn-primary" onclick="restartDaemon()">🔄 Restart Daemon</button>
+        <button class="btn btn-secondary" onclick="testScreenshot()">📸 Test Shot</button>
       </div>
       <div class="btn-group">
-        <button class="btn btn-success" onclick="viewLogs()">
-          📋 View Logs
-        </button>
-        <button class="btn btn-danger" onclick="clearLogs()">
-          🗑️ Clear Logs
-        </button>
+        <button class="btn btn-success" onclick="viewLogs()">📋 View Logs</button>
+        <button class="btn btn-danger" onclick="clearLogs()">🗑️ Clear Logs</button>
       </div>
     </div>
 
@@ -759,308 +470,244 @@
     <div class="section">
       <div class="section-title">Module Info</div>
       <div class="info-card">
-        <div class="info-row">
-          <span class="info-key">Module</span>
-          <span class="info-value">3-Finger Swipe Screenshot</span>
-        </div>
-        <div class="info-row">
-          <span class="info-key">Version</span>
-          <span class="info-value">v2.0.0</span>
-        </div>
-        <div class="info-row">
-          <span class="info-key">Developer</span>
-          <span class="info-value" style="color: var(--accent-light)">Suvojeet Sengupta</span>
-        </div>
-        <div class="info-row">
-          <span class="info-key">Compatibility</span>
-          <span class="info-value">Android 11-15+</span>
-        </div>
-        <div class="info-row">
-          <span class="info-key">Daemon Status</span>
-          <span class="info-value" id="daemonStatus">Checking...</span>
-        </div>
-        <div class="info-row">
-          <span class="info-key">Daemon PID</span>
-          <span class="info-value" id="daemonPid">—</span>
-        </div>
+        <div class="info-row"><span class="info-key">Module</span><span class="info-value">3-Finger Swipe Screenshot</span></div>
+        <div class="info-row"><span class="info-key">Version</span><span class="info-value">v2.1.0</span></div>
+        <div class="info-row"><span class="info-key">Developer</span><span class="info-value" style="color:var(--accent-light)">Suvojeet Sengupta</span></div>
+        <div class="info-row"><span class="info-key">Compatibility</span><span class="info-value">Android 11-16+</span></div>
+        <div class="info-row"><span class="info-key">Daemon Status</span><span class="info-value" id="daemonStatus">Checking...</span></div>
+        <div class="info-row"><span class="info-key">Daemon PID</span><span class="info-value" id="daemonPid">—</span></div>
       </div>
     </div>
 
-    <!-- Footer -->
     <div class="footer">
       Made with ❤️ by <span class="dev-name">Suvojeet Sengupta</span><br>
-      3-Finger Swipe Screenshot Module v2.0.0<br>
-      Compatible with Magisk & KernelSU
+      3-Finger Swipe Screenshot Module v2.1.0<br>
+      Compatible with Magisk &amp; KernelSU
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
-  <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner"></div>
   </div>
 
   <!-- Log Modal -->
-  <div id="logModal" style="display:none; position:fixed; inset:0; z-index:3000; background:var(--bg-primary); overflow-y:auto;">
+  <div id="logModal" style="display:none;position:fixed;inset:0;z-index:3000;background:var(--bg-primary);overflow-y:auto;">
     <div style="padding:20px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <h2 style="font-size:18px;">Daemon Logs</h2>
         <button onclick="document.getElementById('logModal').style.display='none'"
-          style="background:var(--bg-card); border:1px solid var(--border); color:var(--text-primary); padding:8px 16px; border-radius:8px; font-size:14px; cursor:pointer;">
+          style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;">
           ✕ Close
         </button>
       </div>
-      <pre id="logContent" style="background:var(--bg-card); padding:16px; border-radius:12px; font-size:12px; color:var(--text-secondary); white-space:pre-wrap; word-break:break-all; max-height:70vh; overflow-y:auto; border:1px solid var(--border);"></pre>
+      <pre id="logContent" style="background:var(--bg-card);padding:16px;border-radius:12px;font-size:12px;color:var(--text-secondary);white-space:pre-wrap;word-break:break-all;max-height:70vh;overflow-y:auto;border:1px solid var(--border);"></pre>
     </div>
   </div>
 
   <script>
-    const CONFIG_PATH = '/data/adb/3swipe/config.prop';
-    const PID_PATH = '/data/adb/3swipe/daemon.pid';
-    const LOG_PATH = '/data/adb/3swipe/daemon.log';
-    const DAEMON_SCRIPT = '/data/adb/modules/three_swipe_screenshot/common/3swipe_daemon.sh';
+    /* ══════════════════════════════════════════════════════════════════════════
+     *  PATHS
+     * ═════════════════════════════════════════════════════════════════════════ */
+    const CFG  = '/data/adb/3swipe/config.prop';
+    const PID  = '/data/adb/3swipe/daemon.pid';
+    const LOG  = '/data/adb/3swipe/daemon.log';
+    const DAEMON = '/data/adb/modules/three_swipe_screenshot/common/3swipe_daemon.sh';
 
-    // ── Shell Command Execution ──────────────────────
-    // KernelSU WebUI provides kernelsu.exec() or we fall back to ksu.exec()
-    async function execCommand(cmd) {
+    /* ══════════════════════════════════════════════════════════════════════════
+     *  SHELL EXEC  — KernelSU Promise-based API with timeout safety
+     * ═════════════════════════════════════════════════════════════════════════ */
+    function withTimeout(promise, ms) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+      ]);
+    }
+
+    async function exec(cmd) {
       try {
-        // KernelSU WebUI API
-        if (typeof ksu !== 'undefined' && ksu.exec) {
-          return new Promise((resolve) => {
-            ksu.exec(cmd, {}, (out, err) => {
-              resolve({ stdout: out || '', stderr: err || '' });
-            });
-          });
+        // KernelSU v0.7+ WebUI injects `ksu` object
+        if (typeof ksu !== 'undefined' && typeof ksu.exec === 'function') {
+          const r = await withTimeout(ksu.exec(cmd), 15000);
+          return { out: r.stdout || '', err: r.stderr || '', code: r.errno || 0 };
         }
-        // Alternative KernelSU API
-        if (typeof kernelsu !== 'undefined' && kernelsu.exec) {
-          const result = await kernelsu.exec(cmd);
-          return { stdout: result.stdout || result.output || '', stderr: result.stderr || '' };
+        // Fallback: kernelsu global
+        if (typeof kernelsu !== 'undefined' && typeof kernelsu.exec === 'function') {
+          const r = await withTimeout(kernelsu.exec(cmd), 15000);
+          return { out: r.stdout || r.output || '', err: r.stderr || '', code: r.errno || 0 };
         }
-        // Fallback for testing
-        console.log('Shell exec:', cmd);
-        return { stdout: '', stderr: 'No shell API available' };
+        return { out: '', err: 'No KernelSU shell API found', code: 1 };
       } catch (e) {
-        console.error('Exec error:', e);
-        return { stdout: '', stderr: e.message };
+        return { out: '', err: e.message, code: 1 };
       }
     }
 
-    // ── Toast Notification ───────────────────────────
-    function showToast(msg, duration = 2500) {
-      const toast = document.getElementById('toast');
-      toast.textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), duration);
+    /* ── Toast ─────────────────────────────────────────────────────────────── */
+    let toastTimer;
+    function toast(msg, ms = 2500) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), ms);
     }
 
-    // ── Loading State ────────────────────────────────
-    function setLoading(show) {
-      document.getElementById('loadingOverlay').classList.toggle('show', show);
-    }
-
-    // ── Range Display Update ─────────────────────────
-    function updateRangeDisplay(inputId, displayId, unit) {
-      const input = document.getElementById(inputId);
-      const display = document.getElementById(displayId);
-      display.textContent = input.value + unit;
-    }
-
-    // ── Read Config ──────────────────────────────────
-    async function loadConfig() {
-      const result = await execCommand(`cat "${CONFIG_PATH}" 2>/dev/null`);
-      const config = {};
-      if (result.stdout) {
-        result.stdout.split('\n').forEach(line => {
-          line = line.trim();
-          if (line && !line.startsWith('#')) {
-            const [key, ...valParts] = line.split('=');
-            if (key) config[key.trim()] = valParts.join('=').trim();
-          }
-        });
-      }
-      return config;
-    }
-
-    // ── Save Single Setting ──────────────────────────
-    async function saveSetting(key, value) {
-      // Update config file using sed
-      const cmd = `
-        if grep -q "^${key}=" "${CONFIG_PATH}" 2>/dev/null; then
-          sed -i "s|^${key}=.*|${key}=${value}|" "${CONFIG_PATH}"
-        else
-          echo "${key}=${value}" >> "${CONFIG_PATH}"
-        fi
-      `;
-      await execCommand(cmd);
-      showToast(`${key.replace(/_/g, ' ')} updated`);
-    }
-
-    // ── Toggle Main Feature ──────────────────────────
-    async function toggleFeature(enabled) {
-      await saveSetting('enabled', enabled ? '1' : '0');
-      updateStatusBanner(enabled);
-
-      if (enabled) {
-        await restartDaemon();
+    /* ── Loading ──────────────────────────────────────────────────────────── */
+    let loadingTimer;
+    function loading(on) {
+      clearTimeout(loadingTimer);
+      const el = document.getElementById('loadingOverlay');
+      if (on) {
+        el.classList.add('show');
+        // safety: auto-hide after 10 s so user is never stuck
+        loadingTimer = setTimeout(() => { el.classList.remove('show'); toast('Operation timed out'); }, 10000);
       } else {
-        await execCommand(`
-          if [ -f "${PID_PATH}" ]; then
-            kill $(cat "${PID_PATH}" 2>/dev/null) 2>/dev/null
-            rm -f "${PID_PATH}"
-          fi
-        `);
-        showToast('Module disabled');
+        el.classList.remove('show');
       }
     }
 
-    // ── Update Status Banner ─────────────────────────
-    function updateStatusBanner(active) {
-      const banner = document.getElementById('statusBanner');
-      const title = document.getElementById('statusTitle');
-      const desc = document.getElementById('statusDesc');
+    /* ── Range display helper ─────────────────────────────────────────────── */
+    function updateRange(inputId, displayId, unit) {
+      document.getElementById(displayId).textContent = document.getElementById(inputId).value + unit;
+    }
 
-      banner.className = `status-banner ${active ? 'active' : 'inactive'}`;
-      title.textContent = active ? 'Module Active' : 'Module Disabled';
-      desc.textContent = active
+    /* ══════════════════════════════════════════════════════════════════════════
+     *  CONFIG helpers
+     * ═════════════════════════════════════════════════════════════════════════ */
+    async function readConfig() {
+      const r = await exec('cat "' + CFG + '" 2>/dev/null');
+      const cfg = {};
+      (r.out || '').split('\n').forEach(l => {
+        l = l.trim();
+        if (!l || l.startsWith('#')) return;
+        const i = l.indexOf('=');
+        if (i > 0) cfg[l.substring(0, i).trim()] = l.substring(i + 1).trim();
+      });
+      return cfg;
+    }
+
+    async function saveSetting(key, val) {
+      await exec(
+        'grep -q "^' + key + '=" "' + CFG + '" 2>/dev/null && ' +
+        'sed -i "s|^' + key + '=.*|' + key + '=' + val + '|" "' + CFG + '" || ' +
+        'echo "' + key + '=' + val + '" >> "' + CFG + '"'
+      );
+      toast(key.replace(/_/g, ' ') + ' → ' + val);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════════
+     *  ACTIONS
+     * ═════════════════════════════════════════════════════════════════════════ */
+    function updateBanner(active) {
+      const b = document.getElementById('statusBanner');
+      b.className = 'status-banner ' + (active ? 'active' : 'inactive');
+      document.getElementById('statusTitle').textContent = active ? 'Module Active' : 'Module Disabled';
+      document.getElementById('statusDesc').textContent  = active
         ? '3-finger swipe screenshot is enabled'
         : 'Gesture detection is turned off';
     }
 
-    // ── Restart Daemon ───────────────────────────────
+    async function toggleFeature(on) {
+      loading(true);
+      try {
+        await saveSetting('enabled', on ? '1' : '0');
+        updateBanner(on);
+        if (on) {
+          await exec(
+            'if [ -f "' + PID + '" ]; then kill $(cat "' + PID + '") 2>/dev/null; sleep 1; kill -9 $(cat "' + PID + '") 2>/dev/null; rm -f "' + PID + '"; fi; ' +
+            'nohup sh "' + DAEMON + '" >> "' + LOG + '" 2>&1 &'
+          );
+          toast('Module enabled — daemon started');
+        } else {
+          await exec('if [ -f "' + PID + '" ]; then kill $(cat "' + PID + '") 2>/dev/null; sleep 1; kill -9 $(cat "' + PID + '") 2>/dev/null; rm -f "' + PID + '"; fi');
+          toast('Module disabled');
+        }
+        setTimeout(checkDaemon, 2000);
+      } finally { loading(false); }
+    }
+
     async function restartDaemon() {
-      setLoading(true);
-      await execCommand(`
-        # Kill existing daemon
-        if [ -f "${PID_PATH}" ]; then
-          kill $(cat "${PID_PATH}" 2>/dev/null) 2>/dev/null
-          sleep 1
-          kill -9 $(cat "${PID_PATH}" 2>/dev/null) 2>/dev/null
-          rm -f "${PID_PATH}"
-        fi
-        # Start new daemon
-        nohup sh "${DAEMON_SCRIPT}" >> "${LOG_PATH}" 2>&1 &
-        echo "Restarted with PID: $!"
-      `);
-      setTimeout(async () => {
-        setLoading(false);
-        showToast('Daemon restarted');
-        await checkDaemonStatus();
-      }, 2000);
+      loading(true);
+      try {
+        await exec(
+          'if [ -f "' + PID + '" ]; then kill $(cat "' + PID + '") 2>/dev/null; sleep 1; kill -9 $(cat "' + PID + '") 2>/dev/null; rm -f "' + PID + '"; fi; ' +
+          'nohup sh "' + DAEMON + '" >> "' + LOG + '" 2>&1 &'
+        );
+        toast('Daemon restarted');
+        setTimeout(checkDaemon, 2500);
+      } finally { setTimeout(() => loading(false), 2000); }
     }
 
-    // ── Test Screenshot ──────────────────────────────
     async function testScreenshot() {
-      setLoading(true);
-      const dir = '/sdcard/Pictures/Screenshots';
-      const fn = `Screenshot_3swipe_test_${Date.now()}.png`;
-      await execCommand(`
-        mkdir -p "${dir}"
-        screencap -p "${dir}/${fn}"
-        am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://${dir}/${fn}" --user 0 2>/dev/null
-      `);
-      setLoading(false);
-      showToast('Test screenshot captured!');
+      loading(true);
+      try {
+        const ts = new Date().toISOString().replace(/[-T:.Z]/g, '').slice(0,14);
+        const dir = '/sdcard/Pictures/Screenshots';
+        const f   = dir + '/Screenshot_3swipe_test_' + ts + '.png';
+        await exec('mkdir -p "' + dir + '"; screencap -p "' + f + '"; am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://' + f + '" --user 0 >/dev/null 2>&1');
+        toast('Test screenshot captured!');
+      } finally { loading(false); }
     }
 
-    // ── View Logs ────────────────────────────────────
     async function viewLogs() {
-      setLoading(true);
-      const result = await execCommand(`tail -n 100 "${LOG_PATH}" 2>/dev/null || echo "No logs found"`);
-      document.getElementById('logContent').textContent = result.stdout || 'No log data available';
-      document.getElementById('logModal').style.display = 'block';
-      setLoading(false);
+      loading(true);
+      try {
+        const r = await exec('tail -n 150 "' + LOG + '" 2>/dev/null || echo "No logs found"');
+        document.getElementById('logContent').textContent = r.out || 'No log data available';
+        document.getElementById('logModal').style.display = 'block';
+      } finally { loading(false); }
     }
 
-    // ── Clear Logs ───────────────────────────────────
     async function clearLogs() {
-      await execCommand(`echo "" > "${LOG_PATH}" 2>/dev/null`);
-      showToast('Logs cleared');
+      await exec('echo "" > "' + LOG + '"');
+      toast('Logs cleared');
     }
 
-    // ── Check Daemon Status ──────────────────────────
-    async function checkDaemonStatus() {
-      const pidResult = await execCommand(`cat "${PID_PATH}" 2>/dev/null`);
-      const pid = (pidResult.stdout || '').trim();
+    async function checkDaemon() {
+      const pidR = await exec('cat "' + PID + '" 2>/dev/null');
+      const pid  = (pidR.out || '').trim();
       const pidEl = document.getElementById('daemonPid');
-      const statusEl = document.getElementById('daemonStatus');
+      const stEl  = document.getElementById('daemonStatus');
 
       if (pid) {
-        const checkResult = await execCommand(`kill -0 ${pid} 2>/dev/null && echo "running" || echo "stopped"`);
-        const isRunning = (checkResult.stdout || '').trim() === 'running';
-
+        const chk = await exec('kill -0 ' + pid + ' 2>/dev/null && echo running || echo stopped');
+        const ok  = (chk.out || '').trim() === 'running';
         pidEl.textContent = pid;
-        statusEl.textContent = isRunning ? '● Running' : '○ Stopped';
-        statusEl.style.color = isRunning ? 'var(--success)' : 'var(--danger)';
+        stEl.textContent  = ok ? '● Running' : '○ Stopped';
+        stEl.style.color  = ok ? 'var(--success)' : 'var(--danger)';
       } else {
         pidEl.textContent = '—';
-        statusEl.textContent = '○ Not running';
-        statusEl.style.color = 'var(--danger)';
+        stEl.textContent  = '○ Not running';
+        stEl.style.color  = 'var(--danger)';
       }
     }
 
-    // ── Apply Config to UI ───────────────────────────
-    async function applyConfigToUI() {
-      const config = await loadConfig();
+    /* ══════════════════════════════════════════════════════════════════════════
+     *  INIT — apply saved config to UI
+     * ═════════════════════════════════════════════════════════════════════════ */
+    async function init() {
+      const c = await readConfig();
 
-      // Main toggle
-      const enabled = config.enabled !== '0';
-      document.getElementById('toggleEnabled').checked = enabled;
-      updateStatusBanner(enabled);
+      const on = c.enabled !== '0';
+      document.getElementById('toggleEnabled').checked = on;
+      updateBanner(on);
 
-      // Direction
-      if (config.swipe_direction) {
-        document.getElementById('swipeDirection').value = config.swipe_direction;
-      }
+      if (c.swipe_direction) document.getElementById('swipeDirection').value = c.swipe_direction;
+      if (c.swipe_threshold) { document.getElementById('sensitivity').value = c.swipe_threshold; document.getElementById('sensitivityVal').textContent = c.swipe_threshold + 'px'; }
+      if (c.screenshot_delay) { document.getElementById('screenshotDelay').value = c.screenshot_delay; document.getElementById('delayVal').textContent = c.screenshot_delay + 'ms'; }
+      document.getElementById('toggleVibration').checked = c.vibration !== '0';
+      if (c.vibration_duration) { document.getElementById('vibDuration').value = c.vibration_duration; document.getElementById('vibVal').textContent = c.vibration_duration + 'ms'; }
+      document.getElementById('toggleNotification').checked = c.show_notification !== '0';
+      if (c.screenshot_format) document.getElementById('screenshotFormat').value = c.screenshot_format;
+      if (c.cooldown) { document.getElementById('cooldown').value = c.cooldown; document.getElementById('cooldownVal').textContent = c.cooldown + 's'; }
+      document.getElementById('toggleDebug').checked = c.debug_log === '1';
 
-      // Sensitivity
-      if (config.swipe_threshold) {
-        document.getElementById('sensitivity').value = config.swipe_threshold;
-        document.getElementById('sensitivityVal').textContent = config.swipe_threshold + 'px';
-      }
-
-      // Screenshot delay
-      if (config.screenshot_delay) {
-        document.getElementById('screenshotDelay').value = config.screenshot_delay;
-        document.getElementById('delayVal').textContent = config.screenshot_delay + 'ms';
-      }
-
-      // Vibration
-      document.getElementById('toggleVibration').checked = config.vibration !== '0';
-
-      // Vibration duration
-      if (config.vibration_duration) {
-        document.getElementById('vibDuration').value = config.vibration_duration;
-        document.getElementById('vibVal').textContent = config.vibration_duration + 'ms';
-      }
-
-      // Notification
-      document.getElementById('toggleNotification').checked = config.show_notification !== '0';
-
-      // Format
-      if (config.screenshot_format) {
-        document.getElementById('screenshotFormat').value = config.screenshot_format;
-      }
-
-      // Cooldown
-      if (config.cooldown) {
-        document.getElementById('cooldown').value = config.cooldown;
-        document.getElementById('cooldownVal').textContent = config.cooldown + 's';
-      }
-
-      // Debug
-      document.getElementById('toggleDebug').checked = config.debug_log === '1';
+      checkDaemon();
+      setInterval(checkDaemon, 15000);
     }
 
-    // ── Initialize ───────────────────────────────────
-    document.addEventListener('DOMContentLoaded', async () => {
-      await applyConfigToUI();
-      await checkDaemonStatus();
-      // Periodically check daemon status
-      setInterval(checkDaemonStatus, 10000);
-    });
+    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
