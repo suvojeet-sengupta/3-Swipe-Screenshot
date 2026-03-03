@@ -1,681 +1,388 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>3-Finger Swipe Screenshot</title>
-  <style>
-    :root {
-      --bg: #101014;
-      --surface: #1a1a22;
-      --card: #21212e;
-      --border: rgba(255, 255, 255, 0.06);
-      --accent: #7c6aff;
-      --green: #3dd68c;
-      --red: #ff5a7a;
-      --text: #e8e8f0;
-      --text2: #8888a0;
-      --text3: #555568;
-      --r: 14px;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-      padding-bottom: 40px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>3-Finger Screenshot</title>
+<style>
+:root{
+  --bg:#101116;--surface:#181b23;--card:#1e222c;
+  --border:#272c38;--accent:#6366f1;
+  --green:#2dd4a0;--red:#ef5350;
+  --text:#cdd1da;--text2:#6c7283;--text3:#444b5c;
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;-webkit-font-smoothing:antialiased;
+  line-height:1.5;
+}
 
-    .hdr {
-      padding: 28px 20px 20px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-    }
-    .hdr h1 {
-      font-size: 20px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .hdr p {
-      font-size: 12px;
-      color: var(--text2);
-      margin-top: 4px;
-    }
+/* Header */
+.hdr{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:24px 20px 16px;border-bottom:1px solid var(--border);
+  background:var(--surface);
+}
+.hdr h1{font-size:17px;font-weight:600;letter-spacing:-0.2px}
+.hdr .sub{font-size:11px;color:var(--text2);margin-top:2px}
+.hdr .ver{
+  font-size:10px;color:var(--text3);
+  background:var(--card);padding:3px 9px;
+  border-radius:6px;border:1px solid var(--border);
+  flex-shrink:0;margin-top:2px;
+}
 
-    .status {
-      margin: 16px;
-      padding: 14px 16px;
-      border-radius: var(--r);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .status.on {
-      background: rgba(61, 214, 140, 0.08);
-      border: 1px solid rgba(61, 214, 140, 0.18);
-    }
-    .status.off {
-      background: rgba(255, 90, 122, 0.08);
-      border: 1px solid rgba(255, 90, 122, 0.18);
-    }
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .status.on .dot {
-      background: var(--green);
-      box-shadow: 0 0 8px rgba(61, 214, 140, 0.5);
-      animation: pulse 2s infinite;
-    }
-    .status.off .dot {
-      background: var(--red);
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    .status b { font-size: 14px; font-weight: 600; }
-    .status small {
-      font-size: 11px;
-      color: var(--text2);
-      display: block;
-      margin-top: 2px;
-    }
+/* Status */
+.st{
+  margin:14px 18px;padding:12px 14px;
+  border-radius:var(--r);display:flex;align-items:center;gap:12px;
+  transition:all .25s;
+}
+.st.run{background:rgba(45,212,160,.07);border:1px solid rgba(45,212,160,.16)}
+.st.stop{background:rgba(239,83,80,.07);border:1px solid rgba(239,83,80,.16)}
+.st.chk{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.16)}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.st.run .dot{background:var(--green);box-shadow:0 0 6px rgba(45,212,160,.35)}
+.st.stop .dot{background:var(--red)}
+.st.chk .dot{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.st-label{font-size:13px;font-weight:500}
+.st-pid{margin-left:auto;font-size:11px;color:var(--text2);font-family:monospace}
 
-    .sec { padding: 0 16px; margin-bottom: 18px; }
-    .sec-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      padding-left: 2px;
-    }
-    .card {
-      background: var(--card);
-      border-radius: var(--r);
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
+/* Sections */
+.sec{padding:0 18px;margin-bottom:18px}
+.sec-t{
+  font-size:10px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;
+}
+.card{
+  background:var(--card);border-radius:var(--r);
+  border:1px solid var(--border);overflow:hidden;
+}
+.row{
+  padding:12px 14px;display:flex;align-items:center;
+  justify-content:space-between;border-bottom:1px solid var(--border);
+}
+.row:last-child{border-bottom:none}
+.r-lbl{font-size:13px;font-weight:500}
+.r-sub{font-size:10px;color:var(--text2);margin-top:1px}
 
-    .row {
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-    .row:last-child { border-bottom: none; }
-    .row .lbl { font-size: 14px; font-weight: 500; }
-    .row .sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
-    .row .info { flex: 1; min-width: 0; }
+/* Select */
+select{
+  background:var(--bg);color:var(--text);
+  border:1px solid var(--border);border-radius:7px;
+  padding:6px 26px 6px 10px;font-size:12px;font-family:inherit;
+  -webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236c7283' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+}
 
-    .tog { position: relative; width: 48px; height: 28px; flex-shrink: 0; }
-    .tog input { opacity: 0; width: 0; height: 0; }
-    .tog .sl {
-      position: absolute;
-      inset: 0;
-      background: #333346;
-      border-radius: 28px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    .tog .sl::before {
-      content: '';
-      position: absolute;
-      width: 22px;
-      height: 22px;
-      background: #fff;
-      border-radius: 50%;
-      top: 3px;
-      left: 3px;
-      transition: 0.3s;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-    }
-    .tog input:checked + .sl { background: var(--accent); }
-    .tog input:checked + .sl::before { transform: translateX(20px); }
+/* Range */
+.rng{display:flex;align-items:center;gap:10px}
+input[type=range]{
+  -webkit-appearance:none;width:80px;height:3px;
+  border-radius:3px;background:var(--border);outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;
+  border-radius:50%;background:var(--accent);cursor:pointer;
+}
+.rv{font-size:12px;font-weight:600;color:var(--accent);min-width:36px;text-align:right;font-family:monospace}
 
-    .sel {
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 7px 28px 7px 10px;
-      font-size: 13px;
-      font-family: inherit;
-      -webkit-appearance: none;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-    }
+/* Toggle */
+.sw{position:relative;width:42px;height:24px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw span{
+  position:absolute;inset:0;background:#333;
+  border-radius:24px;cursor:pointer;transition:.2s;
+}
+.sw span::before{
+  content:'';position:absolute;width:18px;height:18px;
+  background:#fff;border-radius:50%;top:3px;left:3px;
+  transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25);
+}
+.sw input:checked+span{background:var(--accent)}
+.sw input:checked+span::before{transform:translateX(18px)}
 
-    .rng { display: flex; align-items: center; gap: 10px; }
-    .rng input[type=range] {
-      -webkit-appearance: none;
-      width: 80px;
-      height: 3px;
-      border-radius: 3px;
-      background: #333346;
-      outline: none;
-    }
-    .rng input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
-    }
-    .rng .rv {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--accent);
-      min-width: 32px;
-      text-align: right;
-    }
+/* Buttons */
+.btns{display:flex;gap:10px;padding:0 18px;margin-bottom:18px}
+.btn{
+  flex:1;padding:11px;border-radius:10px;border:none;
+  font-size:12px;font-weight:500;font-family:inherit;
+  cursor:pointer;transition:opacity .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:active{opacity:.7}
+.b-pri{background:var(--accent);color:#fff}
+.b-sec{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.b-red{color:var(--red)}
 
-    .btns { display: flex; gap: 10px; padding: 0 16px; margin-bottom: 18px; }
-    .btn {
-      flex: 1;
-      padding: 13px;
-      border-radius: 10px;
-      border: none;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .btn:active { transform: scale(0.97); opacity: 0.85; }
-    .btn-a { background: linear-gradient(135deg, var(--accent), #5a4ed4); color: #fff; }
-    .btn-b { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+/* Footer */
+.ftr{text-align:center;padding:18px;font-size:10px;color:var(--text3);line-height:1.6}
 
-    .daemon-line {
-      padding: 0 16px;
-      margin-bottom: 18px;
-      display: flex;
-      gap: 10px;
-      font-size: 12px;
-      color: var(--text2);
-    }
-    .daemon-line span {
-      background: var(--card);
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
+/* Toast */
+.toast{
+  position:fixed;bottom:22px;left:50%;
+  transform:translateX(-50%) translateY(50px);
+  background:var(--card);color:var(--text);
+  padding:9px 18px;border-radius:8px;font-size:12px;
+  border:1px solid var(--border);
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+  opacity:0;transition:.25s;z-index:999;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--card);
-      color: var(--text);
-      padding: 10px 22px;
-      border-radius: 24px;
-      font-size: 13px;
-      font-weight: 500;
-      border: 1px solid var(--border);
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
-      opacity: 0;
-      transition: 0.3s;
-      z-index: 999;
-      white-space: nowrap;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    .ld {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 10, 14, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      opacity: 0;
-      pointer-events: none;
-      transition: 0.3s;
-    }
-    .ld.show { opacity: 1; pointer-events: all; }
-    .sp {
-      width: 36px;
-      height: 36px;
-      border: 3px solid var(--card);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .log-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 3000;
-      background: var(--bg);
-      overflow-y: auto;
-    }
-    .log-modal .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-    }
-    .log-modal h2 { font-size: 16px; }
-    .log-modal .close-btn {
-      background: var(--card);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    .log-modal pre {
-      margin: 0 16px 20px;
-      background: var(--card);
-      padding: 14px;
-      border-radius: 10px;
-      font-size: 11px;
-      color: var(--text2);
-      white-space: pre-wrap;
-      word-break: break-all;
-      max-height: 75vh;
-      overflow-y: auto;
-      border: 1px solid var(--border);
-    }
-
-    .ftr {
-      text-align: center;
-      padding: 24px 16px 8px;
-      font-size: 11px;
-      color: var(--text3);
-      line-height: 1.6;
-    }
-    .ftr b { color: var(--accent); font-weight: 600; }
-  </style>
+/* Log Modal */
+.modal{
+  display:none;position:fixed;inset:0;z-index:2000;
+  background:var(--bg);overflow-y:auto;
+}
+.modal-top{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:18px 20px;border-bottom:1px solid var(--border);
+}
+.modal-top h2{font-size:15px;font-weight:600}
+.modal pre{
+  margin:14px 18px;background:var(--card);padding:12px;
+  border-radius:var(--r);font-size:10px;color:var(--text2);
+  white-space:pre-wrap;word-break:break-all;
+  max-height:80vh;overflow-y:auto;
+  border:1px solid var(--border);font-family:monospace;
+}
+</style>
 </head>
 <body>
 
-  <div class="hdr">
-    <h1>&#x1F4F8; 3-Finger Screenshot</h1>
-    <p>Swipe down with 3 fingers to capture screen</p>
+<div class="hdr">
+  <div>
+    <h1>3-Finger Screenshot</h1>
+    <div class="sub">Gesture-based screen capture</div>
   </div>
+  <span class="ver">v2.7</span>
+</div>
 
-  <div class="status on" id="statusBanner">
-    <div class="dot"></div>
-    <div>
-      <b id="statusTitle">Checking...</b>
-      <small id="statusDesc">Detecting daemon status</small>
+<div class="st chk" id="st">
+  <div class="dot"></div>
+  <span class="st-label" id="stLabel">Checking</span>
+  <span class="st-pid" id="stPid"></span>
+</div>
+
+<div class="sec">
+  <div class="sec-t">Configuration</div>
+  <div class="card">
+    <div class="row">
+      <div><div class="r-lbl">Direction</div></div>
+      <select id="dir" onchange="save('swipe_direction',this.value)">
+        <option value="down">Down</option>
+        <option value="up">Up</option>
+      </select>
     </div>
-  </div>
-
-  <div class="sec">
-    <div class="card">
-      <div class="row">
-        <div class="info">
-          <div class="lbl">Enable</div>
-          <div class="sub">Start or stop gesture detection</div>
-        </div>
-        <label class="tog">
-          <input type="checkbox" id="toggleEnabled" onchange="toggleFeature(this.checked)">
-          <span class="sl"></span>
-        </label>
+    <div class="row">
+      <div>
+        <div class="r-lbl">Sensitivity</div>
+        <div class="r-sub">Lower = easier to trigger</div>
+      </div>
+      <div class="rng">
+        <input type="range" id="sens" min="100" max="800" step="50" value="300"
+          oninput="document.getElementById('sv').textContent=this.value+'px';save('swipe_threshold',this.value)">
+        <span class="rv" id="sv">300px</span>
       </div>
     </div>
-  </div>
-
-  <div class="sec">
-    <div class="sec-title">Settings</div>
-    <div class="card">
-      <div class="row">
-        <div class="info"><div class="lbl">Direction</div></div>
-        <select class="sel" id="swipeDirection" onchange="saveSetting('swipe_direction', this.value)">
-          <option value="down">Down &#x2193;</option>
-          <option value="up">Up &#x2191;</option>
-        </select>
-      </div>
-      <div class="row">
-        <div class="info">
-          <div class="lbl">Sensitivity</div>
-          <div class="sub">Lower = easier to trigger</div>
-        </div>
-        <div class="rng">
-          <input type="range" id="sensitivity" min="100" max="800" step="50" value="300"
-            oninput="updateRange('sensitivity', 'sensVal', 'px'); saveSetting('swipe_threshold', this.value)">
-          <span class="rv" id="sensVal">300px</span>
-        </div>
-      </div>
-      <div class="row">
-        <div class="info"><div class="lbl">Vibration</div></div>
-        <label class="tog">
-          <input type="checkbox" id="toggleVibration" checked onchange="saveSetting('vibration', this.checked ? '1' : '0')">
-          <span class="sl"></span>
-        </label>
-      </div>
+    <div class="row">
+      <div><div class="r-lbl">Vibration</div></div>
+      <label class="sw">
+        <input type="checkbox" id="vib" checked onchange="save('vibration',this.checked?'1':'0')">
+        <span></span>
+      </label>
     </div>
   </div>
+</div>
 
-  <div class="btns">
-    <button class="btn btn-a" onclick="restartDaemon()">&#x21bb; Restart</button>
-    <button class="btn btn-b" onclick="testScreenshot()">&#x1F4F8; Test</button>
-  </div>
+<div class="btns">
+  <button class="btn b-pri" onclick="doRestart()">Restart Daemon</button>
+  <button class="btn b-sec" onclick="doTest()">Test Screenshot</button>
+</div>
 
-  <div class="daemon-line">
-    <span>Daemon: <b id="daemonStatus" style="color: var(--text2)">...</b></span>
-    <span>PID: <b id="daemonPid" style="color: var(--accent)">-</b></span>
-  </div>
-
-  <div class="sec">
-    <div class="sec-title">Troubleshoot</div>
-    <div class="card">
-      <div class="row">
-        <div class="info"><div class="lbl">Debug Logging</div></div>
-        <label class="tog">
-          <input type="checkbox" id="toggleDebug" onchange="saveSetting('debug_log', this.checked ? '1' : '0')">
-          <span class="sl"></span>
-        </label>
-      </div>
-    </div>
-    <div class="btns" style="padding: 10px 0 0; margin: 0;">
-      <button class="btn btn-b" onclick="viewLogs()" style="font-size: 12px; padding: 10px;">&#x1F4CB; View Logs</button>
-      <button class="btn btn-b" onclick="clearLogs()" style="font-size: 12px; padding: 10px; color: var(--red);">&#x1F5D1; Clear Logs</button>
+<div class="sec">
+  <div class="sec-t">Diagnostics</div>
+  <div class="card">
+    <div class="row">
+      <div><div class="r-lbl">Debug Logging</div></div>
+      <label class="sw">
+        <input type="checkbox" id="dbg" onchange="save('debug_log',this.checked?'1':'0')">
+        <span></span>
+      </label>
     </div>
   </div>
+</div>
 
-  <div class="ftr">
-    Made by <b>Suvojeet Sengupta</b><br>
-    v2.7 &#xb7; Magisk / KernelSU
+<div class="btns">
+  <button class="btn b-sec" onclick="viewLogs()">View Logs</button>
+  <button class="btn b-sec b-red" onclick="clearLogs()">Clear Logs</button>
+</div>
+
+<div class="ftr">Suvojeet Sengupta &middot; v2.7 &middot; Magisk / KernelSU</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="logModal">
+  <div class="modal-top">
+    <h2>Daemon Logs</h2>
+    <button class="btn b-sec" style="flex:none;padding:5px 12px;font-size:11px" onclick="document.getElementById('logModal').style.display='none'">Close</button>
   </div>
+  <pre id="logContent"></pre>
+</div>
 
-  <div class="toast" id="toast"></div>
-  <div class="ld" id="loadingOverlay"><div class="sp"></div></div>
+<script>
+var CFG='/data/adb/3swipe/config.prop';
+var PIDF='/data/adb/3swipe/daemon.pid';
+var LOGF='/data/adb/3swipe/daemon.log';
+var LNCH='/data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh';
 
-  <div class="log-modal" id="logModal">
-    <div class="top-bar">
-      <h2>Logs</h2>
-      <button class="close-btn" onclick="document.getElementById('logModal').style.display = 'none'">&#x2715; Close</button>
-    </div>
-    <pre id="logContent"></pre>
-  </div>
+function exec(cmd){
+  return new Promise(function(resolve){
+    var done=function(o,e,c){resolve({out:o||'',err:e||'',code:c||0})};
+    try{
+      var api=null;
+      if(typeof ksu!=='undefined'&&ksu.exec)api=ksu;
+      else if(typeof kernelsu!=='undefined'&&kernelsu.exec)api=kernelsu;
+      else if(typeof mmrl!=='undefined'&&mmrl.exec)api=mmrl;
+      if(!api){done('','No root API',1);return}
+      var r=api.exec(cmd);
+      if(r&&typeof r.then==='function'){
+        r.then(function(v){done(v.stdout||v.out||v.output||'',v.stderr||'',v.errno||v.code||0)})
+        .catch(function(e){done('',String(e),1)});
+      }else if(r){
+        done(r.stdout||r.out||r.output||'',r.stderr||'',r.errno||r.code||0);
+      }else{done('','null',1)}
+    }catch(e){done('',String(e),1)}
+  });
+}
 
-  <script>
-    var CFG = '/data/adb/3swipe/config.prop';
-    var PID_FILE = '/data/adb/3swipe/daemon.pid';
-    var LOG_FILE = '/data/adb/3swipe/daemon.log';
-    var LAUNCHER = '/data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh';
+var _tt;
+function toast(m){
+  var el=document.getElementById('toast');
+  el.textContent=m;el.classList.add('show');
+  if(_tt)clearTimeout(_tt);
+  _tt=setTimeout(function(){el.classList.remove('show')},2000);
+}
 
-    /* Shell exec — supports multiple KernelSU API versions */
-    function exec(cmd) {
-      return new Promise(function(resolve) {
-        try {
-          /* KernelSU v1 API (ksu.exec) */
-          if (typeof ksu !== 'undefined' && typeof ksu.exec === 'function') {
-            var result = ksu.exec(cmd);
-            /* Handle both sync and async returns */
-            if (result && typeof result.then === 'function') {
-              result.then(function(r) {
-                resolve({ out: r.stdout || r.out || '', err: r.stderr || '', code: r.errno || r.code || 0 });
-              }).catch(function(e) {
-                resolve({ out: '', err: String(e), code: 1 });
-              });
-            } else if (result) {
-              resolve({ out: result.stdout || result.out || '', err: result.stderr || '', code: result.errno || result.code || 0 });
-            } else {
-              resolve({ out: '', err: 'exec returned null', code: 1 });
-            }
-            return;
-          }
+function setSt(state,pid){
+  var el=document.getElementById('st');
+  var lb=document.getElementById('stLabel');
+  var pe=document.getElementById('stPid');
+  el.className='st '+state;
+  if(state==='run'){lb.textContent='Running';pe.textContent='PID '+pid}
+  else if(state==='stop'){lb.textContent='Stopped';pe.textContent=''}
+  else{lb.textContent='Checking';pe.textContent=''}
+}
 
-          /* KernelSU v2 API (kernelsu.exec) */
-          if (typeof kernelsu !== 'undefined' && typeof kernelsu.exec === 'function') {
-            var result2 = kernelsu.exec(cmd);
-            if (result2 && typeof result2.then === 'function') {
-              result2.then(function(r) {
-                resolve({ out: r.stdout || r.output || '', err: r.stderr || '', code: r.errno || r.code || 0 });
-              }).catch(function(e) {
-                resolve({ out: '', err: String(e), code: 1 });
-              });
-            } else if (result2) {
-              resolve({ out: result2.stdout || result2.output || '', err: result2.stderr || '', code: result2.errno || result2.code || 0 });
-            } else {
-              resolve({ out: '', err: 'exec returned null', code: 1 });
-            }
-            return;
-          }
+function checkSt(){
+  return exec(
+    'pid=$(cat "'+PIDF+'" 2>/dev/null|tr -dc 0-9); '+
+    'if [ -n "$pid" ] && [ -d "/proc/$pid" ]; then echo "R:$pid"; '+
+    'else p2=$(pgrep -f 3swipe_daemon 2>/dev/null|head -1); '+
+    'if [ -n "$p2" ]; then echo "R:$p2"; else echo "S:"; fi; fi'
+  ).then(function(r){
+    var o=(r.out||'').trim();
+    if(o.indexOf('R:')===0){setSt('run',o.substring(2));return true}
+    setSt('stop','');return false;
+  }).catch(function(){setSt('stop','');return false});
+}
 
-          /* MMRL / Magisk WebUI API */
-          if (typeof mmrl !== 'undefined' && typeof mmrl.exec === 'function') {
-            var result3 = mmrl.exec(cmd);
-            if (result3 && typeof result3.then === 'function') {
-              result3.then(function(r) {
-                resolve({ out: r.stdout || r.out || '', err: r.stderr || '', code: r.code || 0 });
-              }).catch(function(e) {
-                resolve({ out: '', err: String(e), code: 1 });
-              });
-            } else if (result3) {
-              resolve({ out: result3.stdout || result3.out || '', err: result3.stderr || '', code: result3.code || 0 });
-            } else {
-              resolve({ out: '', err: 'exec returned null', code: 1 });
-            }
-            return;
-          }
+function save(key,val){
+  return exec(
+    'grep -q "^'+key+'=" "'+CFG+'" 2>/dev/null && '+
+    'sed -i "s|^'+key+'=.*|'+key+'='+val+'|" "'+CFG+'" || '+
+    'echo "'+key+'='+val+'" >> "'+CFG+'"'
+  ).then(function(){toast(key.replace(/_/g,' ')+' updated')});
+}
 
-          resolve({ out: '', err: 'No root shell API found', code: 1 });
-        } catch (e) {
-          resolve({ out: '', err: String(e), code: 1 });
-        }
-      });
+function startDaemon(){
+  return exec(
+    'grep -q "^enabled=" "'+CFG+'" 2>/dev/null && '+
+    'sed -i "s|^enabled=.*|enabled=1|" "'+CFG+'" || '+
+    'echo "enabled=1" >> "'+CFG+'"; '+
+    'sh "'+LNCH+'" restart'
+  ).then(function(){setTimeout(checkSt,2500)});
+}
+
+function doRestart(){
+  setSt('chk','');
+  save('enabled','1').then(function(){
+    return exec('sh "'+LNCH+'" restart');
+  }).then(function(){
+    toast('Daemon restarted');
+    setTimeout(checkSt,2500);
+  });
+}
+
+function doTest(){
+  var ts=new Date().toISOString().replace(/[-:T.Z]/g,'').substring(0,14);
+  var f='/sdcard/Pictures/Screenshots/Screenshot_'+ts+'.png';
+  exec(
+    'mkdir -p /sdcard/Pictures/Screenshots; '+
+    'screencap -p "'+f+'"; '+
+    'chmod 0644 "'+f+'"; '+
+    'am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://'+f+'" --user 0 >/dev/null 2>&1'
+  ).then(function(r){toast(r.code?'Failed':'Screenshot saved')});
+}
+
+function viewLogs(){
+  exec('tail -n 200 "'+LOGF+'" 2>/dev/null || echo "No logs"').then(function(r){
+    document.getElementById('logContent').textContent=r.out||'Empty';
+    document.getElementById('logModal').style.display='block';
+  });
+}
+
+function clearLogs(){
+  exec('echo "" > "'+LOGF+'"').then(function(){toast('Logs cleared')});
+}
+
+function init(){
+  exec(
+    'cat "'+CFG+'" 2>/dev/null; echo "===SPLIT==="; '+
+    'pid=$(cat "'+PIDF+'" 2>/dev/null|tr -dc 0-9); '+
+    'if [ -n "$pid" ] && [ -d "/proc/$pid" ]; then echo "R:$pid"; '+
+    'else p2=$(pgrep -f 3swipe_daemon 2>/dev/null|head -1); '+
+    'if [ -n "$p2" ]; then echo "R:$p2"; else echo "S:"; fi; fi'
+  ).then(function(r){
+    var parts=(r.out||'').split('===SPLIT===');
+    var lines=(parts[0]||'').split('\n');
+    var cfg={};
+    for(var i=0;i<lines.length;i++){
+      var l=lines[i].trim();
+      if(!l||l.charAt(0)==='#')continue;
+      var eq=l.indexOf('=');
+      if(eq>0)cfg[l.substring(0,eq).trim()]=l.substring(eq+1).trim();
     }
-
-    /* Toast */
-    var toastTimer = null;
-    function toast(msg, ms) {
-      ms = ms || 2500;
-      var el = document.getElementById('toast');
-      el.textContent = msg;
-      el.classList.add('show');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(function() { el.classList.remove('show'); }, ms);
+    if(cfg.swipe_direction)document.getElementById('dir').value=cfg.swipe_direction;
+    if(cfg.swipe_threshold){
+      document.getElementById('sens').value=cfg.swipe_threshold;
+      document.getElementById('sv').textContent=cfg.swipe_threshold+'px';
     }
+    document.getElementById('vib').checked=cfg.vibration!=='0';
+    document.getElementById('dbg').checked=cfg.debug_log==='1';
 
-    /* Loading overlay */
-    var ldTimer = null;
-    function loading(on) {
-      if (ldTimer) clearTimeout(ldTimer);
-      var el = document.getElementById('loadingOverlay');
-      if (on) {
-        el.classList.add('show');
-        ldTimer = setTimeout(function() { el.classList.remove('show'); toast('Timed out'); }, 12000);
-      } else {
-        el.classList.remove('show');
-      }
+    var stLine=(parts[1]||'').trim();
+    if(stLine.indexOf('R:')===0){
+      setSt('run',stLine.substring(2));
+    }else{
+      setSt('stop','');
+      startDaemon();
     }
+    setInterval(checkSt,10000);
+  }).catch(function(){
+    setSt('stop','');
+    startDaemon();
+    setInterval(checkSt,10000);
+  });
+}
 
-    function updateRange(id, displayId, unit) {
-      document.getElementById(displayId).textContent = document.getElementById(id).value + unit;
-    }
-
-    /* Config helpers */
-    function readConfig() {
-      return exec('cat "' + CFG + '" 2>/dev/null').then(function(r) {
-        var cfg = {};
-        var lines = (r.out || '').split('\n');
-        for (var i = 0; i < lines.length; i++) {
-          var l = lines[i].trim();
-          if (!l || l.charAt(0) === '#') continue;
-          var eq = l.indexOf('=');
-          if (eq > 0) cfg[l.substring(0, eq).trim()] = l.substring(eq + 1).trim();
-        }
-        return cfg;
-      });
-    }
-
-    function saveSetting(key, val) {
-      return exec(
-        'grep -q "^' + key + '=" "' + CFG + '" 2>/dev/null && ' +
-        'sed -i "s|^' + key + '=.*|' + key + '=' + val + '|" "' + CFG + '" || ' +
-        'echo "' + key + '=' + val + '" >> "' + CFG + '"'
-      ).then(function() {
-        toast(key.replace(/_/g, ' ') + ' = ' + val);
-      });
-    }
-
-    /* Banner */
-    function updateBanner(on) {
-      var b = document.getElementById('statusBanner');
-      b.className = 'status ' + (on ? 'on' : 'off');
-      document.getElementById('statusTitle').textContent = on ? 'Active' : 'Disabled';
-      document.getElementById('statusDesc').textContent = on ? 'Listening for gestures' : 'Gesture detection off';
-    }
-
-    /* Actions */
-    function toggleFeature(on) {
-      loading(true);
-      saveSetting('enabled', on ? '1' : '0').then(function() {
-        updateBanner(on);
-        if (on) {
-          return exec('sh "' + LAUNCHER + '" restart').then(function() { toast('Enabled'); });
-        } else {
-          return exec('sh "' + LAUNCHER + '" stop').then(function() { toast('Disabled'); });
-        }
-      }).then(function() {
-        setTimeout(checkDaemon, 2000);
-      }).catch(function() {}).then(function() { loading(false); });
-    }
-
-    function restartDaemon() {
-      loading(true);
-      saveSetting('enabled', '1').then(function() {
-        document.getElementById('toggleEnabled').checked = true;
-        updateBanner(true);
-        return exec('sh "' + LAUNCHER + '" restart');
-      }).then(function() {
-        toast('Restarted');
-        setTimeout(checkDaemon, 3000);
-      }).catch(function() {}).then(function() { loading(false); });
-    }
-
-    function testScreenshot() {
-      loading(true);
-      var ts = new Date().toISOString().replace(/[-:T.Z]/g, '').substring(0, 14);
-      var f = '/sdcard/Pictures/Screenshots/Screenshot_' + ts + '.png';
-      exec('mkdir -p /sdcard/Pictures/Screenshots').then(function() {
-        return exec('screencap -p "' + f + '"');
-      }).then(function() {
-        return exec('chmod 0644 "' + f + '"');
-      }).then(function() {
-        return exec('am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://' + f + '" --user 0');
-      }).then(function() {
-        toast('Screenshot saved!');
-      }).catch(function() {
-        toast('Screenshot failed');
-      }).then(function() { loading(false); });
-    }
-
-    function viewLogs() {
-      loading(true);
-      exec('tail -n 150 "' + LOG_FILE + '" 2>/dev/null || echo "No logs"').then(function(r) {
-        document.getElementById('logContent').textContent = r.out || 'No data';
-        document.getElementById('logModal').style.display = 'block';
-      }).catch(function() {}).then(function() { loading(false); });
-    }
-
-    function clearLogs() {
-      exec('echo "" > "' + LOG_FILE + '"').then(function() { toast('Logs cleared'); });
-    }
-
-    /* Check daemon status */
-    function checkDaemon() {
-      return exec('cat "' + PID_FILE + '" 2>/dev/null').then(function(r) {
-        var pid = (r.out || '').trim().replace(/[^0-9]/g, '');
-        var pe = document.getElementById('daemonPid');
-        var se = document.getElementById('daemonStatus');
-        if (pid && pid.length > 0) {
-          return exec('[ -d /proc/' + pid + ' ] && echo R || echo S').then(function(c) {
-            var alive = (c.out || '').indexOf('R') >= 0;
-            pe.textContent = pid;
-            se.textContent = alive ? 'Running' : 'Stopped';
-            se.style.color = alive ? 'var(--green)' : 'var(--red)';
-            return alive;
-          });
-        } else {
-          pe.textContent = '-';
-          se.textContent = 'Not running';
-          se.style.color = 'var(--red)';
-          return false;
-        }
-      }).catch(function() {
-        document.getElementById('daemonStatus').textContent = 'Error';
-        document.getElementById('daemonStatus').style.color = 'var(--red)';
-        return false;
-      });
-    }
-
-    /* Auto-start daemon if not running */
-    function ensureDaemonRunning() {
-      return checkDaemon().then(function(alive) {
-        if (!alive) {
-          return saveSetting('enabled', '1').then(function() {
-            return exec('sh "' + LAUNCHER + '" restart');
-          }).then(function() {
-            document.getElementById('toggleEnabled').checked = true;
-            updateBanner(true);
-            setTimeout(checkDaemon, 3000);
-          });
-        }
-      });
-    }
-
-    /* Init */
-    function init() {
-      readConfig().then(function(c) {
-        var on = c.enabled !== '0';
-        document.getElementById('toggleEnabled').checked = on;
-        updateBanner(on);
-
-        if (c.swipe_direction) document.getElementById('swipeDirection').value = c.swipe_direction;
-        if (c.swipe_threshold) {
-          document.getElementById('sensitivity').value = c.swipe_threshold;
-          document.getElementById('sensVal').textContent = c.swipe_threshold + 'px';
-        }
-        document.getElementById('toggleVibration').checked = c.vibration !== '0';
-        document.getElementById('toggleDebug').checked = c.debug_log === '1';
-
-        /* Auto-start: if daemon is not running, start it automatically */
-        ensureDaemonRunning();
-
-        setInterval(checkDaemon, 15000);
-      }).catch(function(e) {
-        /* Config not readable — still try to start daemon */
-        updateBanner(true);
-        document.getElementById('toggleEnabled').checked = true;
-        ensureDaemonRunning();
-        setInterval(checkDaemon, 15000);
-      });
-    }
-
-    /* Start when page loads */
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init);
-    } else {
-      init();
-    }
-  </script>
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+</script>
 </body>
 </html>

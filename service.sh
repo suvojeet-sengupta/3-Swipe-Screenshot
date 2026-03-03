@@ -47,3 +47,20 @@ fi
 
 # Launch daemon via dedicated launcher (handles detach + double-fork)
 sh "$MODULE_DIR/common/daemon_launcher.sh" restart
+
+# Watchdog: ensure daemon stays alive and auto-restart if it dies
+(
+  while true; do
+    sleep 60
+    if [ -f "$DATA_DIR/daemon.pid" ]; then
+      wpid=$(cat "$DATA_DIR/daemon.pid" 2>/dev/null)
+      if [ -n "$wpid" ] && ! kill -0 "$wpid" 2>/dev/null; then
+        echo "[$(date '+%m-%d %H:%M:%S')] Watchdog: daemon died, restarting" >> "$DATA_DIR/daemon.log"
+        sh "$MODULE_DIR/common/daemon_launcher.sh" restart
+      fi
+    else
+      echo "[$(date '+%m-%d %H:%M:%S')] Watchdog: no PID file, restarting" >> "$DATA_DIR/daemon.log"
+      sh "$MODULE_DIR/common/daemon_launcher.sh" restart
+    fi
+  done
+) &

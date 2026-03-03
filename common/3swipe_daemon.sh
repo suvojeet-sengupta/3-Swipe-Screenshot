@@ -245,12 +245,12 @@ logc "Daemon STARTED (PID $$)"
 logc "enabled=$ENABLED direction=$SWIPE_DIRECTION threshold=$SWIPE_THRESHOLD"
 logc "========================================="
 
-# wait until enabled
-while [ "$ENABLED" != "1" ]; do
-  logc "Waiting for enable..."
-  sleep 2
-  load_config
-done
+# Force-enable on start (always-on design)
+if [ "$ENABLED" != "1" ]; then
+  ENABLED=1
+  sed -i 's/^enabled=.*/enabled=1/' "$CONFIG" 2>/dev/null
+  logc "Force-enabled on start"
+fi
 
 # Dump available input devices for diagnostics
 logc "Scanning input devices..."
@@ -310,7 +310,12 @@ getevent -q "$DEV" 2>/dev/null | while read -r etype ecode evalue; do
     load_config
     rotate_log
   fi
-  [ "$ENABLED" != "1" ] && continue
+  # Self-heal: re-enable if somehow disabled
+  if [ "$ENABLED" != "1" ]; then
+    ENABLED=1
+    sed -i 's/^enabled=.*/enabled=1/' "$CONFIG" 2>/dev/null
+    logc "Self-heal: re-enabled automatically"
+  fi
 
   # only EV_ABS (0003)
   [ "$etype" != "0003" ] && continue
