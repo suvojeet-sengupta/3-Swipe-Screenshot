@@ -1,6 +1,6 @@
 #!/system/bin/sh
 ###############################################################################
-#  3-Finger Swipe Screenshot Daemon  v2.5
+#  3-Finger Swipe Screenshot Daemon  v2.6
 #  Developer: Suvojeet Sengupta
 #
 #  Monitors touchscreen input via getevent and detects 3-finger swipe
@@ -94,8 +94,30 @@ do_vibrate() {
   service call vibrator 2 i32 "$VIBRATION_DURATION" 2>/dev/null
 }
 
+# ── File-based cooldown lock ─────────────────────────────────────────────────
+LOCK_FILE="$DATA_DIR/last_ss"
+
+check_cooldown() {
+  now=$(date +%s)
+  last=$(cat "$LOCK_FILE" 2>/dev/null || echo 0)
+  last=$(echo "$last" | tr -dc '0-9')
+  [ -z "$last" ] && last=0
+  elapsed=$((now - last))
+  if [ "$elapsed" -lt "$COOLDOWN" ]; then
+    return 1  # still in cooldown
+  fi
+  echo "$now" > "$LOCK_FILE"
+  return 0
+}
+
 # ── Take screenshot ──────────────────────────────────────────────────────────
 take_screenshot() {
+  # Double-fire guard: check file-based cooldown
+  if ! check_cooldown; then
+    logc "Screenshot skipped (cooldown)"
+    return
+  fi
+
   logc ">>> Taking screenshot"
 
   if [ "$SCREENSHOT_DELAY" -gt 0 ] 2>/dev/null; then
@@ -103,15 +125,35 @@ take_screenshot() {
   fi
 
   # Brief pause to let fingers lift off screen
-  sleep 0.3
+  sleep 0.4
 
-  # Primary method: system screenshot via KEYCODE_SYSRQ
-  # This automatically handles notification, sound, gallery, and animation
-  input keyevent 120 2>/dev/null
-  logc "Screenshot triggered (system keyevent 120)"
+  # Method 1: system screenshot via KEYCODE_SYSRQ (120)
+  # Handles notification, sound, gallery, and screenshot animation automatically
+  if input keyevent 120 2>/dev/null; then
+    logc "Screenshot triggered (system keyevent 120)"
+  else
+    # Method 2: fallback to screencap
+    logc "keyevent 120 failed, falling back to screencap"
+    mkdir -p "$SAVE_DIRECTORY" 2>/dev/null
+    fname="Screenshot_3swipe_$(date +%Y%m%d_%H%M%S).png"
+    fpath="${SAVE_DIRECTORY}/${fname}"
+    screencap -p "$fpath" 2>/dev/null
+    if [ -f "$fpath" ]; then
+      chmod 0644 "$fpath"
+      logc "Saved: $fpath"
+      # Trigger media scan so it appears in gallery
+      am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
+        -d "file://${fpath}" --user 0 >/dev/null 2>&1
+      # Try to show notification
+      cmd notification post -S bigtext -t "Screenshot Captured" \
+        "3swipe_ss" "Saved to Screenshots" 2>/dev/null
+    else
+      logc "ERROR: screencap also failed for $fpath"
+    fi
+  fi
 
-  # Extra vibration feedback
-  do_vibrate &
+  # Vibration feedback
+  do_vibrate
 }
 
 # ── Kill previous instance ───────────────────────────────────────────────────
@@ -188,11 +230,11 @@ logc "getevent access OK"
 
 # ── State variables ──────────────────────────────────────────────────────────
 SLOT=0
-LAST_SS=0
 a0=0; a1=0; a2=0; a3=0; a4=0; a5=0; a6=0; a7=0; a8=0; a9=0
 s0=0; s1=0; s2=0; s3=0; s4=0; s5=0; s6=0; s7=0; s8=0; s9=0
 c0=0; c1=0; c2=0; c3=0; c4=0; c5=0; c6=0; c7=0; c8=0; c9=0
 CFG_CTR=0
+FIRED=0
 
 logc "Entering event loop — listening for 3-finger swipe..."
 
@@ -223,12 +265,23 @@ getevent -q "$DEV" 2>/dev/null | while read -r etype ecode evalue; do
     0039)  # ABS_MT_TRACKING_ID
       if [ "$evalue" = "ffffffff" ]; then
         eval "a${SLOT}=0; s${SLOT}=0; c${SLOT}=0"
+        # Count remaining active fingers — if all lifted, reset FIRED flag
+        _ac=0; _i=0
+        while [ $_i -le 9 ]; do
+          eval "_av=\$a${_i}"
+          [ "$_av" = "1" ] && _ac=$((_ac + 1))
+          _i=$((_i + 1))
+        done
+        [ $_ac -eq 0 ] && FIRED=0
       else
         eval "a${SLOT}=1; s${SLOT}=-1; c${SLOT}=0"
       fi
       ;;
 
     0036)  # ABS_MT_POSITION_Y
+      # Skip processing if already fired for this gesture
+      [ "$FIRED" = "1" ] && continue
+
       yval=$(printf '%d' "0x${evalue}" 2>/dev/null || echo 0)
 
       eval "sy=\$s${SLOT}"
@@ -258,18 +311,17 @@ getevent -q "$DEV" 2>/dev/null | while read -r etype ecode evalue; do
       done
 
       if [ $fc -ge 3 ] && [ $sc -ge 3 ]; then
-        now=$(date +%s)
-        elapsed=$((now - LAST_SS))
-        if [ $elapsed -ge $COOLDOWN ]; then
-          logc "3-finger swipe DETECTED (fingers=$fc swipes=$sc)"
-          take_screenshot &
-          LAST_SS=$now
-          i=0
-          while [ $i -le 9 ]; do
-            eval "a${i}=0; s${i}=0; c${i}=0"
-            i=$((i + 1))
-          done
-        fi
+        # Mark as fired BEFORE taking screenshot (prevents double fire)
+        FIRED=1
+        logc "3-finger swipe DETECTED (fingers=$fc swipes=$sc)"
+        # Synchronous call — blocks event loop during screenshot (intentional)
+        take_screenshot
+        # Reset all finger state
+        i=0
+        while [ $i -le 9 ]; do
+          eval "s${i}=0; c${i}=0"
+          i=$((i + 1))
+        done
       fi
       ;;
   esac

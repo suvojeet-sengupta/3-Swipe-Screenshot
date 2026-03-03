@@ -1,7 +1,7 @@
 id=three_swipe_screenshot
 name=3-Finger Swipe Screenshot
-version=v2.5.0
-versionCode=250
+version=v2.6.0
+versionCode=260
 author=Suvojeet Sengupta
 description=Enable 3-finger swipe down gesture to capture screenshots. Compatible with Magisk & KernelSU. Supports Android 11-15+.
 updateJson=
