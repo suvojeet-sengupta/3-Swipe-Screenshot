@@ -614,13 +614,10 @@
         await saveSetting('enabled', on ? '1' : '0');
         updateBanner(on);
         if (on) {
-          await exec(
-            'if [ -f "' + PID + '" ]; then kill $(cat "' + PID + '") 2>/dev/null; sleep 1; kill -9 $(cat "' + PID + '") 2>/dev/null; rm -f "' + PID + '"; fi; ' +
-            'setsid sh "' + DAEMON + '" >> "' + LOG + '" 2>&1 &'
-          );
+          await exec('sh /data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh restart');
           toast('Module enabled — daemon started');
         } else {
-          await exec('if [ -f "' + PID + '" ]; then kill $(cat "' + PID + '") 2>/dev/null; sleep 1; kill -9 $(cat "' + PID + '") 2>/dev/null; rm -f "' + PID + '"; fi');
+          await exec('sh /data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh stop');
           toast('Module disabled');
         }
         setTimeout(checkDaemon, 2000);
@@ -630,10 +627,7 @@
     async function restartDaemon() {
       loading(true);
       try {
-        await exec(
-          'if [ -f "' + PID + '" ]; then kill $(cat "' + PID + '") 2>/dev/null; sleep 1; kill -9 $(cat "' + PID + '") 2>/dev/null; rm -f "' + PID + '"; fi; ' +
-          'setsid sh "' + DAEMON + '" >> "' + LOG + '" 2>&1 &'
-        );
+        await exec('sh /data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh restart');
         toast('Daemon restarted');
         setTimeout(checkDaemon, 2500);
       } finally { setTimeout(() => loading(false), 2000); }

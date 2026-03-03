@@ -25,13 +25,8 @@ if [ "$CURRENT" = "1" ]; then
   # ── Disable ──
   sed -i 's/^enabled=.*/enabled=0/' "$CONFIG"
 
-  # Stop daemon
-  if [ -f "$PID_FILE" ]; then
-    kill "$(cat "$PID_FILE")" 2>/dev/null
-    sleep 1
-    kill -9 "$(cat "$PID_FILE")" 2>/dev/null
-    rm -f "$PID_FILE"
-  fi
+  # Stop daemon via launcher
+  sh "$MODULE_DIR/common/daemon_launcher.sh" stop
 
   echo ""
   echo "╔═══════════════════════════════════╗"
@@ -45,15 +40,8 @@ else
   # ── Enable ──
   sed -i 's/^enabled=.*/enabled=1/' "$CONFIG"
 
-  # Kill existing daemon if any
-  if [ -f "$PID_FILE" ]; then
-    kill "$(cat "$PID_FILE")" 2>/dev/null
-    sleep 1
-    rm -f "$PID_FILE"
-  fi
-
-  # Start daemon
-  nohup sh "$DAEMON_SCRIPT" >> "$DATA_DIR/daemon.log" 2>&1 &
+  # Start daemon via launcher
+  sh "$MODULE_DIR/common/daemon_launcher.sh" restart
 
   echo ""
   echo "╔═══════════════════════════════════╗"

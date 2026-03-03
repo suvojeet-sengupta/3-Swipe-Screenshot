@@ -1,0 +1,3 @@
+# Force Unix line endings for all shell scripts
+*.sh text eol=lf
+*.prop text eol=lf
