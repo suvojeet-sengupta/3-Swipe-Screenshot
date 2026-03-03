@@ -60,9 +60,26 @@ load_config() {
 
 # ── Find multitouch input device ─────────────────────────────────────────────
 find_touch_device() {
+  # Method 1: getevent -pl (labels) — look for ABS_MT_POSITION
   for d in /dev/input/event*; do
     [ -e "$d" ] || continue
-    if getevent -p "$d" 2>/dev/null | grep -q "ABS_MT_POSITION"; then
+    if getevent -pl "$d" 2>/dev/null | grep -qi "ABS_MT_POSITION"; then
+      echo "$d"
+      return 0
+    fi
+  done
+  # Method 2: getevent -p (hex) — 0035=ABS_MT_POSITION_X, 0036=ABS_MT_POSITION_Y
+  for d in /dev/input/event*; do
+    [ -e "$d" ] || continue
+    if getevent -p "$d" 2>/dev/null | grep -qE '0035|0036'; then
+      echo "$d"
+      return 0
+    fi
+  done
+  # Method 3: look for ABS_MT_SLOT (002f) or ABS_MT_TRACKING_ID (0039)
+  for d in /dev/input/event*; do
+    [ -e "$d" ] || continue
+    if getevent -p "$d" 2>/dev/null | grep -qE '002f|0039'; then
       echo "$d"
       return 0
     fi
@@ -142,6 +159,14 @@ while [ "$ENABLED" != "1" ]; do
   load_config
 done
 
+# Dump available input devices for diagnostics
+logc "Scanning input devices..."
+for devpath in /dev/input/event*; do
+  [ -e "$devpath" ] || continue
+  devinfo=$(getevent -pl "$devpath" 2>/dev/null | head -1)
+  logc "  Found: $devpath — $devinfo"
+done
+
 # find touch device (retry up to 30 times)
 DEV=""
 tries=0
@@ -155,6 +180,8 @@ while [ -z "$DEV" ] && [ $tries -lt 30 ]; do
 done
 if [ -z "$DEV" ]; then
   logc "FATAL: no touch device found after 30 attempts"
+  logc "DIAG: listing all getevent -p output..."
+  getevent -p 2>/dev/null | while read -r line; do logc "  $line"; done
   rm -f "$PID_FILE"
   exit 1
 fi
