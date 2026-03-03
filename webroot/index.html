@@ -616,7 +616,7 @@
         if (on) {
           await exec(
             'if [ -f "' + PID + '" ]; then kill $(cat "' + PID + '") 2>/dev/null; sleep 1; kill -9 $(cat "' + PID + '") 2>/dev/null; rm -f "' + PID + '"; fi; ' +
-            'nohup sh "' + DAEMON + '" >> "' + LOG + '" 2>&1 &'
+            'setsid sh "' + DAEMON + '" >> "' + LOG + '" 2>&1 &'
           );
           toast('Module enabled — daemon started');
         } else {
@@ -632,7 +632,7 @@
       try {
         await exec(
           'if [ -f "' + PID + '" ]; then kill $(cat "' + PID + '") 2>/dev/null; sleep 1; kill -9 $(cat "' + PID + '") 2>/dev/null; rm -f "' + PID + '"; fi; ' +
-          'nohup sh "' + DAEMON + '" >> "' + LOG + '" 2>&1 &'
+          'setsid sh "' + DAEMON + '" >> "' + LOG + '" 2>&1 &'
         );
         toast('Daemon restarted');
         setTimeout(checkDaemon, 2500);

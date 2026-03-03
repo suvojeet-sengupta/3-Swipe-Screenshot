@@ -46,7 +46,17 @@ if [ -f "$DATA_DIR/daemon.pid" ]; then
 fi
 
 # Start the 3-finger swipe daemon in background
-# Run with nohup to survive shell exit; redirect output to log
-nohup sh "$MODULE_DIR/common/3swipe_daemon.sh" >> "$DATA_DIR/daemon.log" 2>&1 &
+# setsid creates a new session so the daemon survives parent exit
+DAEMON_SCRIPT="$MODULE_DIR/common/3swipe_daemon.sh"
+if command -v setsid >/dev/null 2>&1; then
+  setsid sh "$DAEMON_SCRIPT" >> "$DATA_DIR/daemon.log" 2>&1 &
+else
+  nohup sh "$DAEMON_SCRIPT" >> "$DATA_DIR/daemon.log" 2>&1 &
+fi
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Daemon launched with PID: $!" >> "$DATA_DIR/daemon.log"
+sleep 2
+if [ -f "$DATA_DIR/daemon.pid" ]; then
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Daemon verified running (PID: $(cat $DATA_DIR/daemon.pid))" >> "$DATA_DIR/daemon.log"
+else
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] WARNING: Daemon PID file not found after launch" >> "$DATA_DIR/daemon.log"
+fi
