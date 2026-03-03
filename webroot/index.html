@@ -453,16 +453,34 @@
       </div>
     </div>
 
+    <!-- Live Logs -->
+    <div class="section">
+      <div class="section-title">Live Console</div>
+      <div class="card" style="padding: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div id="logStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></div>
+            <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Real-time Monitor</span>
+          </div>
+          <label class="toggle" style="width: 40px; height: 22px;">
+            <input type="checkbox" id="liveLogToggle" checked onchange="toggleLiveLog(this.checked)">
+            <span class="toggle-slider" style="border-radius: 22px;"></span>
+          </label>
+        </div>
+        <pre id="liveLogBox" style="background: var(--bg-primary); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 11px; color: var(--text-secondary); height: 180px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; margin: 0;"></pre>
+        <div style="display: flex; justify-content: flex-end; margin-top: 8px; gap: 8px;">
+          <button onclick="clearLogs(); document.getElementById('liveLogBox').textContent=''" style="background:transparent; border:none; color:var(--danger); font-size:11px; font-weight:600; cursor:pointer;">CLEAR LOGS</button>
+          <button onclick="copyLogs()" style="background:transparent; border:none; color:var(--accent-light); font-size:11px; font-weight:600; cursor:pointer;">COPY ALL</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="section">
       <div class="section-title">Actions</div>
       <div class="btn-group">
         <button class="btn btn-primary" onclick="restartDaemon()">🔄 Restart Daemon</button>
         <button class="btn btn-secondary" onclick="testScreenshot()">📸 Test Shot</button>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-success" onclick="viewLogs()">📋 View Logs</button>
-        <button class="btn btn-danger" onclick="clearLogs()">🗑️ Clear Logs</button>
       </div>
     </div>
 
@@ -653,6 +671,54 @@
     async function clearLogs() {
       await exec('echo "" > "' + LOG + '"');
       toast('Logs cleared');
+      const box = document.getElementById('liveLogBox');
+      if (box) box.textContent = '[Console Cleared]\n';
+    }
+
+    /* ── Live Log Logic ──────────────────────────────────────────────────── */
+    let logInterval;
+    let lastLogContent = '';
+
+    async function updateLiveLog() {
+      if (!document.getElementById('liveLogToggle').checked) return;
+      
+      const r = await exec('tail -n 100 "' + LOG + '" 2>/dev/null');
+      const box = document.getElementById('liveLogBox');
+      const content = r.out || '';
+
+      if (content !== lastLogContent) {
+        box.textContent = content;
+        lastLogContent = content;
+        // Auto-scroll to bottom
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+
+    function toggleLiveLog(on) {
+      const dot = document.getElementById('logStatusDot');
+      if (on) {
+        dot.style.background = 'var(--success)';
+        dot.style.boxShadow = '0 0 8px rgba(61, 214, 140, 0.5)';
+        if (!logInterval) logInterval = setInterval(updateLiveLog, 2000);
+        updateLiveLog();
+      } else {
+        dot.style.background = 'var(--text-muted)';
+        dot.style.boxShadow = 'none';
+        clearInterval(logInterval);
+        logInterval = null;
+      }
+    }
+
+    async function copyLogs() {
+      const box = document.getElementById('liveLogBox');
+      if (!box || !box.textContent) return;
+      
+      try {
+        await navigator.clipboard.writeText(box.textContent);
+        toast('Logs copied to clipboard');
+      } catch (e) {
+        toast('Copy failed: ' + e.message);
+      }
     }
 
     async function checkDaemon() {
@@ -701,6 +767,7 @@
       document.getElementById('toggleDebug').checked = c.debug_log === '1';
 
       checkDaemon();
+      toggleLiveLog(true);
       setInterval(checkDaemon, 15000);
     }
 
