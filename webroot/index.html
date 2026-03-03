@@ -653,13 +653,34 @@
     async function testScreenshot() {
       loading(true);
       try {
-        // Use shell user (UID 2000) to avoid root binder failures on Android 14+
-        const r = await exec('su 2000 -c "input keyevent 120" 2>&1');
-        const out = (r.out || '') + (r.err || '');
-        if (out.toLowerCase().indexOf('failure') >= 0 || out.toLowerCase().indexOf('error') >= 0) {
-          await exec('input keyevent 120');
+        // Try safe methods in order — AVOID keyevent 120 (SYSRQ causes reboot on LineageOS)
+        let ok = false;
+
+        // Method 1: cmd screenshot (Android 14+)
+        let r = await exec('su 2000 -c "cmd screenshot screenshot" 2>&1');
+        let out = (r.out || '') + (r.err || '');
+        if (!/failure|error|exception|denied|unknown command|not found/i.test(out)) { ok = true; }
+
+        // Method 2: cmd statusbar take-screenshot (Android 12+)
+        if (!ok) {
+          r = await exec('su 2000 -c "cmd statusbar take-screenshot" 2>&1');
+          out = (r.out || '') + (r.err || '');
+          if (!/failure|error|exception|denied|unknown command|not found/i.test(out)) { ok = true; }
         }
-        toast('Screenshot triggered!');
+
+        // Method 3: Power+VolDown combo
+        if (!ok) {
+          r = await exec('su 2000 -c "input keyevent --longpress KEYCODE_POWER KEYCODE_VOLUME_DOWN" 2>&1');
+          out = (r.out || '') + (r.err || '');
+          if (!/failure|error|exception|denied/i.test(out)) { ok = true; }
+        }
+
+        // Method 4: screencap fallback
+        if (!ok) {
+          await exec('screencap -p /sdcard/Pictures/Screenshots/Screenshot_3swipe_test.png');
+        }
+
+        toast(ok ? 'Screenshot triggered!' : 'Saved via screencap fallback');
       } finally { loading(false); }
     }
 

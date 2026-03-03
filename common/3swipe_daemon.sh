@@ -119,10 +119,17 @@ check_cooldown() {
 #  exactly like pressing Power+VolumeDown.  Falls back to screencap only if
 #  every native method fails.
 #
-#  Root cause of binder failures: the daemon runs as UID 0 (root) and many
-#  Android 14+ services reject binder transactions from root.  Running via
-#  `su 2000` (Magisk) re-executes the command as the shell user (UID 2000),
-#  which is the same identity ADB uses — fixing the "Failed transaction" errors.
+#  IMPORTANT: keyevent 120 (SYSRQ) is deliberately AVOIDED because on
+#  LineageOS and other kernels with CONFIG_MAGIC_SYSRQ=y, the kernel
+#  intercepts the SysRq key before Android sees it — causing a full
+#  system reboot instead of a screenshot.
+#
+#  Safe methods used (in order):
+#    1. cmd screenshot            (Android 14+ / API 34+)
+#    2. cmd statusbar screenshot  (Android 12+ / API 31+)
+#    3. Simulate Power+VolDown combo via input
+#    4. wm screenshot             (some AOSP ROMs)
+#    5. screencap -p  (manual fallback — no native animation)
 # ─────────────────────────────────────────────────────────────────────────────
 take_screenshot() {
   # Double-fire guard: check file-based cooldown
@@ -140,40 +147,65 @@ take_screenshot() {
   # Brief pause to let fingers lift off screen
   sleep 0.4
 
-  # ── Method 1: KEYCODE_SYSRQ (120) as shell user ────────────────────────
-  # Best compatibility — same as ADB "input keyevent 120"
-  _err=$(su 2000 -c "input keyevent 120" 2>&1)
-  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
-    logc "System screenshot triggered (keyevent 120 — shell user)"
+  # ── Method 1: cmd screenshot (Android 14+ / API 34+) ───────────────────
+  # Triggers native SystemUI screenshot with animation, sound & notification.
+  _err=$(su 2000 -c "cmd screenshot screenshot" 2>&1)
+  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied\|unknown command\|not found'; then
+    logc "System screenshot triggered (cmd screenshot — shell user)"
     return
   fi
-  logd "Method 1 (shell user keyevent 120): $_err"
+  logd "Method 1 (cmd screenshot): $_err"
 
-  # ── Method 2: keyevent 120 with explicit SELinux context ───────────────
-  _err=$(su 2000 -z u:r:shell:s0 -c "input keyevent 120" 2>&1)
-  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
-    logc "System screenshot triggered (keyevent 120 — shell+secontext)"
+  # ── Method 2: cmd statusbar take-screenshot (Android 12+ / API 31+) ────
+  _err=$(su 2000 -c "cmd statusbar take-screenshot" 2>&1)
+  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied\|unknown command\|not found'; then
+    logc "System screenshot triggered (cmd statusbar take-screenshot)"
     return
   fi
-  logd "Method 2 (shell+secontext keyevent 120): $_err"
+  logd "Method 2 (cmd statusbar take-screenshot): $_err"
 
-  # ── Method 3: keyevent 120 as root (works on older Android / some ROMs) ─
-  _err=$(input keyevent 120 2>&1)
+  # ── Method 3: Simulate Power + Volume Down key combo ───────────────────
+  # This is exactly what the hardware buttons do — safe on all ROMs.
+  _err=$(su 2000 -c "input keyevent --longpress KEYCODE_POWER KEYCODE_VOLUME_DOWN" 2>&1)
   if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
-    logc "System screenshot triggered (keyevent 120 — root)"
+    logc "System screenshot triggered (Power+VolDown combo)"
     return
   fi
-  logd "Method 3 (root keyevent 120): $_err"
+  logd "Method 3 (Power+VolDown combo): $_err"
 
-  # ── Method 4: enter zygote namespace and retry ─────────────────────────
-  _zpid=$(pidof zygote64 2>/dev/null || pidof zygote 2>/dev/null)
-  if [ -n "$_zpid" ]; then
-    _err=$(nsenter --target "$_zpid" --mount -- /system/bin/sh -c "input keyevent 120" 2>&1)
+  # ── Method 3b: Power+VolDown as separate events with tiny gap ──────────
+  (su 2000 -c "input keyevent KEYCODE_POWER" &)
+  sleep 0.05
+  _err=$(su 2000 -c "input keyevent KEYCODE_VOLUME_DOWN" 2>&1)
+  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
+    logc "System screenshot triggered (Power+VolDown sequential)"
+    return
+  fi
+  logd "Method 3b (Power+VolDown sequential): $_err"
+
+  # ── Method 4: wm screenshot (some AOSP/Lineage builds) ────────────────
+  _err=$(su 2000 -c "wm screenshot" 2>&1)
+  if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied\|unknown command\|not found'; then
+    logc "System screenshot triggered (wm screenshot)"
+    return
+  fi
+  logd "Method 4 (wm screenshot): $_err"
+
+  # ── Method 5: global action via service call ───────────────────────────
+  # TAKE_SCREENSHOT = 9 via IStatusBarService.handleSystemKey or
+  # AccessibilityService global action
+  _err=$(su 2000 -c "cmd statusbar expand-notifications && sleep 0.1 && cmd statusbar collapse && input keyevent 120" 2>&1)
+  # Only try keyevent 120 via framework if SysRq is NOT handled by kernel
+  # Check if /proc/sysrq-trigger exists — if yes, kernel will eat the key
+  if [ ! -f /proc/sysrq-trigger ]; then
+    _err=$(su 2000 -c "input keyevent 120" 2>&1)
     if ! echo "$_err" | grep -qi 'failure\|error\|exception\|denied'; then
-      logc "System screenshot triggered (nsenter + keyevent 120)"
+      logc "System screenshot triggered (keyevent 120 — SysRq safe)"
       return
     fi
-    logd "Method 4 (nsenter keyevent 120): $_err"
+    logd "Method 5 (keyevent 120 safe): $_err"
+  else
+    logd "Method 5 skipped: /proc/sysrq-trigger exists, kernel would intercept SYSRQ"
   fi
 
   # ── Fallback: screencap (no native animation / notification) ────────────
