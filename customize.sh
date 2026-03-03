@@ -76,7 +76,7 @@ show_notification=1
 save_directory=/sdcard/Pictures/Screenshots
 
 # Cooldown between screenshots in seconds
-cooldown=2
+cooldown=0
 
 # Log daemon activity (1 = yes, 0 = no)
 debug_log=0
