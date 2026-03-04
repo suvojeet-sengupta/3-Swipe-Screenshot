@@ -147,8 +147,11 @@ check_cooldown() {
 }
 
 # ── Play screenshot shutter sound ────────────────────────────────────────────
-# Use media_session broadcast or am start — avoids cmd media.player Binder failures
+# IMPORTANT: do NOT use "am start -a VIEW" — it opens a visible music player.
+# Instead use background audio methods that play without any UI.
 do_sound() {
+  # Find a suitable sound file
+  SND_FILE=""
   for snd in \
     /system/media/audio/ui/camera_click.ogg \
     /system/media/audio/ui/camera_shutter.ogg \
@@ -157,16 +160,30 @@ do_sound() {
     /product/media/audio/ui/screenshot_click.ogg \
     /system/product/media/audio/ui/camera_click.ogg; do
     if [ -f "$snd" ]; then
-      # Use am start with VIEW intent — works without Binder transaction issues
-      am start -a android.intent.action.VIEW \
-        -d "file://$snd" -t audio/ogg \
-        --user 0 >/dev/null 2>&1 && return
-      # Fallback: toybox/busybox play (rarely available but harmless)
-      toybox play "$snd" >/dev/null 2>&1 && return
+      SND_FILE="$snd"
+      break
     fi
   done
-  # If no sound file found, silently skip
-  :
+  [ -z "$SND_FILE" ] && return
+
+  # Method 1: stagefright CLI (available on most AOSP/Qualcomm builds, plays in background)
+  if command -v stagefright >/dev/null 2>&1; then
+    stagefright -a -o "$SND_FILE" >/dev/null 2>&1 &
+    return
+  fi
+
+  # Method 2: Use Android's hidden "slesTest_playStatic" or tinyplay
+  if command -v tinyplay >/dev/null 2>&1; then
+    tinyplay "$SND_FILE" >/dev/null 2>&1 &
+    return
+  fi
+
+  # Method 3: Use service call to play a ringtone-type sound effect via AudioManager
+  # This sends EFFECT_CLICK to the audio system (effectId=0, sessionId=0)
+  service call audio 26 i32 5 >/dev/null 2>&1 && return
+
+  # Method 4: toybox/busybox play (rarely available)
+  toybox play "$SND_FILE" >/dev/null 2>&1 &
 }
 
 # ── Show system-style notification with screenshot preview ───────────────────
