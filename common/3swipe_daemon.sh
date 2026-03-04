@@ -90,11 +90,14 @@ find_touch_device() {
 # ── Vibrate ──────────────────────────────────────────────────────────────────
 do_vibrate() {
   [ "$VIBRATION" != "1" ] && return
-  # Try as shell user first (avoids root binder restrictions on Android 14+)
-  su 2000 -c "cmd vibrator_manager vibrate -d 0 -f $VIBRATION_DURATION oneshot" 2>/dev/null && return
-  cmd vibrator_manager vibrate -d 0 -f "$VIBRATION_DURATION" oneshot 2>/dev/null && return
-  su 2000 -c "service call vibrator 2 i32 $VIBRATION_DURATION" 2>/dev/null && return
-  service call vibrator 2 i32 "$VIBRATION_DURATION" 2>/dev/null
+  # Try as shell user (avoids root binder restrictions on Android 12-14+)
+  su shell -c "cmd vibrator_manager vibrate -d 0 -f $VIBRATION_DURATION oneshot 2>/dev/null" 2>/dev/null && return
+  su 2000 -c "cmd vibrator_manager vibrate -d 0 -f $VIBRATION_DURATION oneshot 2>/dev/null" 2>/dev/null && return
+  # Fallback to direct cmd as root
+  cmd vibrator_manager vibrate -d 0 -f "$VIBRATION_DURATION" oneshot >/dev/null 2>&1 && return
+  # Legacy service call
+  su shell -c "service call vibrator 2 i32 $VIBRATION_DURATION 2>/dev/null" 2>/dev/null && return
+  service call vibrator 2 i32 "$VIBRATION_DURATION" >/dev/null 2>&1
 }
 
 # ── File-based cooldown lock ─────────────────────────────────────────────────
@@ -121,14 +124,17 @@ do_sound() {
     /system/media/audio/ui/camera_shutter.ogg \
     /system/media/audio/ui/screenshot_click.ogg \
     /product/media/audio/ui/camera_click.ogg \
-    /product/media/audio/ui/screenshot_click.ogg; do
+    /product/media/audio/ui/screenshot_click.ogg \
+    /system/product/media/audio/ui/camera_click.ogg; do
     if [ -f "$snd" ]; then
-      su 2000 -c "cmd media.player play '$snd'" 2>/dev/null && return
-      su 2000 -c "am start -a android.intent.action.VIEW -d 'file://$snd' -t audio/ogg --user 0" 2>/dev/null && return
+      su shell -c "cmd media.player play '$snd' 2>/dev/null" 2>/dev/null && return
+      su 2000 -c "cmd media.player play '$snd' 2>/dev/null" 2>/dev/null && return
+      # Use --user 0 and move redirection inside
+      su shell -c "am start -a android.intent.action.VIEW -d 'file://$snd' -t audio/ogg --user 0 2>/dev/null" 2>/dev/null && return
     fi
   done
-  # Fallback: play a beep via toybox/media_player
-  toybox  2>/dev/null
+  # Fallback: remove the toybox call as it doesn't do anything useful
+  :
 }
 
 # ── Show system-style notification with screenshot preview ───────────────────
@@ -137,22 +143,15 @@ do_notification() {
   _nfname="$2"
   [ "$SHOW_NOTIFICATION" != "1" ] && return
 
-  # Android system-style screenshot notification with image preview
-  # Uses content:// URI for the image so the notification shows a preview
-  su 2000 -c "cmd notification post \
-    -S messaging \
-    -t 'Screenshot captured' \
-    --conversation '3swipe_ss' 'Screenshot' \
-    --message 'now:Saved to Screenshots' \
-    'tag_3swipe'" 2>/dev/null && return
+  # Use shell/2000 user and move redirection inside. Add --user 0.
+  su shell -c "cmd notification post --user 0 -S messaging -t 'Screenshot captured' --conversation '3swipe_ss' 'Screenshot' --message 'now:Saved to Screenshots' 'tag_3swipe' 2>/dev/null" 2>/dev/null && return
+  su 2000 -c "cmd notification post --user 0 -S messaging -t 'Screenshot captured' --conversation '3swipe_ss' 'Screenshot' --message 'now:Saved to Screenshots' 'tag_3swipe' 2>/dev/null" 2>/dev/null && return
 
-  su 2000 -c "cmd notification post \
-    -S bigtext \
-    -t 'Screenshot captured' \
-    '3swipe_ss' \
-    'Saved: ${_nfname}'" 2>/dev/null && return
+  su shell -c "cmd notification post --user 0 -S bigtext -t 'Screenshot captured' '3swipe_ss' 'Saved: ${_nfname}' 2>/dev/null" 2>/dev/null && return
+  su 2000 -c "cmd notification post --user 0 -S bigtext -t 'Screenshot captured' '3swipe_ss' 'Saved: ${_nfname}' 2>/dev/null" 2>/dev/null && return
 
-  cmd notification post -S bigtext -t "Screenshot captured" "3swipe_ss" "Saved: ${_nfname}" 2>/dev/null
+  # Fallback as root
+  cmd notification post --user 0 -S bigtext -t "Screenshot captured" "3swipe_ss" "Saved: ${_nfname}" >/dev/null 2>&1
 }
 
 # ── Take screenshot ──────────────────────────────────────────────────────────
@@ -201,11 +200,16 @@ take_screenshot() {
         -d "file://${fpath}" --user 0 >/dev/null 2>&1
 
       # MediaStore insert (Android 11+ scoped storage)
-      su 2000 -c "content insert --uri content://media/external/images/media \
+      su shell -c "content insert --user 0 --uri content://media/external/images/media \
         --bind _display_name:s:${fname} \
         --bind mime_type:s:image/png \
         --bind relative_path:s:Pictures/Screenshots \
-        --bind _data:s:${fpath}" 2>/dev/null
+        --bind _data:s:${fpath} 2>/dev/null" 2>/dev/null
+      su 2000 -c "content insert --user 0 --uri content://media/external/images/media \
+        --bind _display_name:s:${fname} \
+        --bind mime_type:s:image/png \
+        --bind relative_path:s:Pictures/Screenshots \
+        --bind _data:s:${fpath} 2>/dev/null" 2>/dev/null
 
       # System notification
       do_notification "$fpath" "$fname"
@@ -236,6 +240,14 @@ cleanup() { logc "Daemon stopping (PID $$)"; rm -f "$PID_FILE"; exit 0; }
 # ══════════════════════════════════════════════════════════════════════════════
 mkdir -p "$DATA_DIR"
 trap cleanup INT TERM HUP
+
+# ── Handle --trigger from interceptor ─────────────────────────────────────────
+if [ "$1" = "--trigger" ]; then
+  load_config
+  take_screenshot
+  exit 0
+fi
+
 kill_old
 echo $$ > "$PID_FILE"
 
