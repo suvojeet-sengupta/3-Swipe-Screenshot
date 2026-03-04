@@ -8,7 +8,7 @@
 :root{
   --bg:#101116;--surface:#181b23;--card:#1e222c;
   --border:#272c38;--accent:#6366f1;
-  --green:#2dd4a0;--red:#ef5350;
+  --green:#2dd4a0;--red:#ef5350;--amber:#f59e0b;
   --text:#cdd1da;--text2:#6c7283;--text3:#444b5c;
   --r:12px;
 }
@@ -33,6 +33,14 @@ body{
   background:var(--card);padding:3px 9px;
   border-radius:6px;border:1px solid var(--border);
   flex-shrink:0;margin-top:2px;
+}
+
+/* Error banner */
+.err-banner{
+  display:none;margin:14px 18px 0;padding:10px 14px;
+  border-radius:var(--r);font-size:12px;
+  background:rgba(239,83,80,.1);border:1px solid rgba(239,83,80,.2);
+  color:var(--red);
 }
 
 /* Status */
@@ -83,7 +91,7 @@ select{
 /* Range */
 .rng{display:flex;align-items:center;gap:10px}
 input[type=range]{
-  -webkit-appearance:none;width:80px;height:3px;
+  -webkit-appearance:none;width:90px;height:3px;
   border-radius:3px;background:var(--border);outline:none;
 }
 input[type=range]::-webkit-slider-thumb{
@@ -108,7 +116,7 @@ input[type=range]::-webkit-slider-thumb{
 .sw input:checked+span::before{transform:translateX(18px)}
 
 /* Buttons */
-.btns{display:flex;gap:10px;padding:0 18px;margin-bottom:18px}
+.btns{display:flex;gap:10px;padding:0 18px;margin-bottom:10px}
 .btn{
   flex:1;padding:11px;border-radius:10px;border:none;
   font-size:12px;font-weight:500;font-family:inherit;
@@ -116,9 +124,11 @@ input[type=range]::-webkit-slider-thumb{
   -webkit-tap-highlight-color:transparent;
 }
 .btn:active{opacity:.7}
+.btn:disabled{opacity:.4;pointer-events:none}
 .b-pri{background:var(--accent);color:#fff}
 .b-sec{background:var(--card);color:var(--text);border:1px solid var(--border)}
 .b-red{color:var(--red)}
+.b-grn{color:var(--green)}
 
 /* Footer */
 .ftr{text-align:center;padding:18px;font-size:10px;color:var(--text3);line-height:1.6}
@@ -161,8 +171,10 @@ input[type=range]::-webkit-slider-thumb{
     <h1>3-Finger Screenshot</h1>
     <div class="sub">Gesture-based screen capture</div>
   </div>
-  <span class="ver">v2.7</span>
+  <span class="ver">v2.8</span>
 </div>
+
+<div class="err-banner" id="errBanner"></div>
 
 <div class="st chk" id="st">
   <div class="dot"></div>
@@ -187,7 +199,8 @@ input[type=range]::-webkit-slider-thumb{
       </div>
       <div class="rng">
         <input type="range" id="sens" min="100" max="800" step="50" value="300"
-          oninput="document.getElementById('sv').textContent=this.value+'px';save('swipe_threshold',this.value)">
+          oninput="document.getElementById('sv').textContent=this.value+'px'"
+          onchange="save('swipe_threshold',this.value)">
         <span class="rv" id="sv">300px</span>
       </div>
     </div>
@@ -198,13 +211,58 @@ input[type=range]::-webkit-slider-thumb{
         <span></span>
       </label>
     </div>
+    <div class="row">
+      <div>
+        <div class="r-lbl">Vibration Duration</div>
+        <div class="r-sub">Milliseconds</div>
+      </div>
+      <div class="rng">
+        <input type="range" id="vibDur" min="10" max="200" step="10" value="50"
+          oninput="document.getElementById('vibDurV').textContent=this.value+'ms'"
+          onchange="save('vibration_duration',this.value)">
+        <span class="rv" id="vibDurV">50ms</span>
+      </div>
+    </div>
+    <div class="row">
+      <div><div class="r-lbl">Notification</div></div>
+      <label class="sw">
+        <input type="checkbox" id="notif" checked onchange="save('show_notification',this.checked?'1':'0')">
+        <span></span>
+      </label>
+    </div>
+    <div class="row">
+      <div>
+        <div class="r-lbl">Screenshot Delay</div>
+        <div class="r-sub">Milliseconds before capture</div>
+      </div>
+      <div class="rng">
+        <input type="range" id="delay" min="0" max="2000" step="100" value="0"
+          oninput="document.getElementById('delayV').textContent=this.value+'ms'"
+          onchange="save('screenshot_delay',this.value)">
+        <span class="rv" id="delayV">0ms</span>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <div class="r-lbl">Cooldown</div>
+        <div class="r-sub">Seconds between screenshots</div>
+      </div>
+      <div class="rng">
+        <input type="range" id="cd" min="0" max="10" step="1" value="0"
+          oninput="document.getElementById('cdV').textContent=this.value+'s'"
+          onchange="save('cooldown',this.value)">
+        <span class="rv" id="cdV">0s</span>
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="btns">
-  <button class="btn b-pri" onclick="doRestart()">Restart Daemon</button>
-  <button class="btn b-sec" onclick="doTest()">Test Screenshot</button>
-  <button class="btn b-sec b-red" id="toggleBtn" onclick="doToggle()">Disable</button>
+  <button class="btn b-pri" id="btnRestart" onclick="doRestart()">Restart Daemon</button>
+  <button class="btn b-sec" id="btnTest" onclick="doTest()">Test Screenshot</button>
+</div>
+<div class="btns">
+  <button class="btn b-sec" id="toggleBtn" onclick="doToggle()" style="flex:none;width:100%">Disable</button>
 </div>
 
 <div class="sec">
@@ -225,7 +283,7 @@ input[type=range]::-webkit-slider-thumb{
   <button class="btn b-sec b-red" onclick="clearLogs()">Clear Logs</button>
 </div>
 
-<div class="ftr">Suvojeet Sengupta &middot; v2.7 &middot; Magisk / KernelSU</div>
+<div class="ftr">Suvojeet Sengupta &middot; v2.8 &middot; Magisk / KernelSU</div>
 
 <div class="toast" id="toast"></div>
 
@@ -242,17 +300,35 @@ var CFG='/data/adb/3swipe/config.prop';
 var PIDF='/data/adb/3swipe/daemon.pid';
 var LOGF='/data/adb/3swipe/daemon.log';
 var LNCH='/data/adb/modules/three_swipe_screenshot/common/daemon_launcher.sh';
+var _rootApi=null;
+var _rootOk=false;
+var _stTimer=null;
 
+/* ── Root API detection ──────────────────────────────────────────────────── */
+function detectRootApi(){
+  if(typeof ksu!=='undefined'&&ksu.exec)return ksu;
+  if(typeof kernelsu!=='undefined'&&kernelsu.exec)return kernelsu;
+  if(typeof mmrl!=='undefined'&&mmrl.exec)return mmrl;
+  return null;
+}
+
+function showError(msg){
+  var el=document.getElementById('errBanner');
+  el.textContent=msg;el.style.display='block';
+}
+
+/* ── Sanitize values to prevent shell injection ──────────────────────────── */
+function sanitize(str){
+  return String(str).replace(/[^a-zA-Z0-9_\/.\-]/g,'');
+}
+
+/* ── Shell exec wrapper ──────────────────────────────────────────────────── */
 function exec(cmd){
   return new Promise(function(resolve){
     var done=function(o,e,c){resolve({out:o||'',err:e||'',code:c||0})};
     try{
-      var api=null;
-      if(typeof ksu!=='undefined'&&ksu.exec)api=ksu;
-      else if(typeof kernelsu!=='undefined'&&kernelsu.exec)api=kernelsu;
-      else if(typeof mmrl!=='undefined'&&mmrl.exec)api=mmrl;
-      if(!api){done('','No root API',1);return}
-      var r=api.exec(cmd);
+      if(!_rootApi){done('','No root API',1);return}
+      var r=_rootApi.exec(cmd);
       if(r&&typeof r.then==='function'){
         r.then(function(v){done(v.stdout||v.out||v.output||'',v.stderr||'',v.errno||v.code||0)})
         .catch(function(e){done('',String(e),1)});
@@ -263,22 +339,37 @@ function exec(cmd){
   });
 }
 
+/* ── Toast ───────────────────────────────────────────────────────────────── */
 var _tt;
 function toast(m){
   var el=document.getElementById('toast');
   el.textContent=m;el.classList.add('show');
   if(_tt)clearTimeout(_tt);
-  _tt=setTimeout(function(){el.classList.remove('show')},2000);
+  _tt=setTimeout(function(){el.classList.remove('show')},2200);
 }
 
+/* ── Button lock (prevent double taps) ───────────────────────────────────── */
+function lockBtn(id,ms){
+  var b=document.getElementById(id);
+  if(b){b.disabled=true;setTimeout(function(){b.disabled=false},ms||3000)}
+}
+
+/* ── Status ──────────────────────────────────────────────────────────────── */
 function setSt(state,pid){
   var el=document.getElementById('st');
   var lb=document.getElementById('stLabel');
   var pe=document.getElementById('stPid');
+  var tb=document.getElementById('toggleBtn');
   el.className='st '+state;
-  if(state==='run'){lb.textContent='Running';pe.textContent='PID '+pid}
-  else if(state==='stop'){lb.textContent='Stopped';pe.textContent=''}
-  else{lb.textContent='Checking';pe.textContent=''}
+  if(state==='run'){
+    lb.textContent='Running';pe.textContent='PID '+pid;
+    tb.textContent='Disable';tb.className='btn b-sec b-red';
+  }else if(state==='stop'){
+    lb.textContent='Stopped';pe.textContent='';
+    tb.textContent='Enable';tb.className='btn b-sec b-grn';
+  }else{
+    lb.textContent='Checking';pe.textContent='';
+  }
 }
 
 function checkSt(){
@@ -294,7 +385,9 @@ function checkSt(){
   }).catch(function(){setSt('stop','');return false});
 }
 
+/* ── Save config (sanitised) ─────────────────────────────────────────────── */
 function save(key,val){
+  key=sanitize(key);val=sanitize(val);
   return exec(
     'grep -q "^'+key+'=" "'+CFG+'" 2>/dev/null && '+
     'sed -i "s|^'+key+'=.*|'+key+'='+val+'|" "'+CFG+'" || '+
@@ -302,27 +395,31 @@ function save(key,val){
   ).then(function(){toast(key.replace(/_/g,' ')+' updated')});
 }
 
+/* ── Daemon start ────────────────────────────────────────────────────────── */
 function startDaemon(){
   return exec(
     'grep -q "^enabled=" "'+CFG+'" 2>/dev/null && '+
     'sed -i "s|^enabled=.*|enabled=1|" "'+CFG+'" || '+
     'echo "enabled=1" >> "'+CFG+'"; '+
     'sh "'+LNCH+'" restart'
-  ).then(function(){setTimeout(checkSt,2500)});
+  ).then(function(){setTimeout(checkSt,3000)});
 }
 
 function doRestart(){
+  lockBtn('btnRestart',4000);
   setSt('chk','');
   save('enabled','1').then(function(){
     return exec('sh "'+LNCH+'" restart');
   }).then(function(){
     toast('Daemon restarted');
-    setTimeout(checkSt,2500);
+    setTimeout(checkSt,3000);
   });
 }
 
+/* ── Test screenshot ─────────────────────────────────────────────────────── */
 function doTest(){
-  // Use local time to match daemon-produced filenames
+  lockBtn('btnTest',3000);
+  toast('Taking screenshot...');
   var now=new Date();
   var ts=now.getFullYear()
     +String(now.getMonth()+1).padStart(2,'0')
@@ -336,50 +433,67 @@ function doTest(){
     'screencap -p "'+f+'"; '+
     'chmod 0644 "'+f+'"; '+
     'am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://'+f+'" --user 0 >/dev/null 2>&1'
-  ).then(function(r){toast(r.code?'Failed':'Screenshot saved')});
+  ).then(function(r){toast(r.code?'Screenshot failed':'Screenshot saved!')});
 }
 
+/* ── Enable / Disable toggle ─────────────────────────────────────────────── */
 function doToggle(){
+  lockBtn('toggleBtn',4000);
   checkSt().then(function(running){
     if(running){
-      // Disable: set enabled=0 and stop daemon
       save('enabled','0').then(function(){
         return exec('sh "'+LNCH+'" stop');
       }).then(function(){
         toast('Daemon disabled');
         setSt('stop','');
-        document.getElementById('toggleBtn').textContent='Enable';
-        document.getElementById('toggleBtn').className='btn b-sec';
       });
     }else{
-      // Enable: set enabled=1 and start daemon
       save('enabled','1').then(function(){
         return exec('sh "'+LNCH+'" restart');
       }).then(function(){
         toast('Daemon enabled');
-        setTimeout(function(){
-          checkSt().then(function(){
-            document.getElementById('toggleBtn').textContent='Disable';
-            document.getElementById('toggleBtn').className='btn b-sec b-red';
-          });
-        },3000);
+        setTimeout(checkSt,3000);
       });
     }
   });
 }
 
+/* ── Logs ─────────────────────────────────────────────────────────────────── */
 function viewLogs(){
-  exec('tail -n 200 "'+LOGF+'" 2>/dev/null || echo "No logs"').then(function(r){
-    document.getElementById('logContent').textContent=r.out||'Empty';
+  exec('tail -n 300 "'+LOGF+'" 2>/dev/null || echo "No logs"').then(function(r){
+    var pre=document.getElementById('logContent');
+    pre.textContent=r.out||'Empty';
     document.getElementById('logModal').style.display='block';
+    // Auto-scroll to bottom
+    setTimeout(function(){pre.scrollTop=pre.scrollHeight},50);
   });
 }
 
 function clearLogs(){
-  exec('echo "" > "'+LOGF+'"').then(function(){toast('Logs cleared')});
+  exec('true > "'+LOGF+'"').then(function(){toast('Logs cleared')});
 }
 
+/* ── Pause status checks when page is hidden (save battery) ──────────────── */
+function startStatusLoop(){
+  if(_stTimer)clearInterval(_stTimer);
+  _stTimer=setInterval(checkSt,10000);
+}
+function stopStatusLoop(){
+  if(_stTimer){clearInterval(_stTimer);_stTimer=null}
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden)stopStatusLoop(); else{checkSt();startStatusLoop()}
+});
+
+/* ── Init ─────────────────────────────────────────────────────────────────── */
 function init(){
+  _rootApi=detectRootApi();
+  if(!_rootApi){
+    showError('No root API detected. This WebUI requires KernelSU or Magisk + MMRL.');
+    setSt('stop','');
+    return;
+  }
+
   exec(
     'cat "'+CFG+'" 2>/dev/null; echo "===SPLIT==="; '+
     'pid=$(cat "'+PIDF+'" 2>/dev/null|tr -dc 0-9); '+
@@ -396,30 +510,45 @@ function init(){
       var eq=l.indexOf('=');
       if(eq>0)cfg[l.substring(0,eq).trim()]=l.substring(eq+1).trim();
     }
+
+    /* Populate UI from config */
     if(cfg.swipe_direction)document.getElementById('dir').value=cfg.swipe_direction;
+
     if(cfg.swipe_threshold){
       document.getElementById('sens').value=cfg.swipe_threshold;
       document.getElementById('sv').textContent=cfg.swipe_threshold+'px';
     }
     document.getElementById('vib').checked=cfg.vibration!=='0';
+
+    if(cfg.vibration_duration){
+      document.getElementById('vibDur').value=cfg.vibration_duration;
+      document.getElementById('vibDurV').textContent=cfg.vibration_duration+'ms';
+    }
+    document.getElementById('notif').checked=cfg.show_notification!=='0';
+
+    if(cfg.screenshot_delay){
+      document.getElementById('delay').value=cfg.screenshot_delay;
+      document.getElementById('delayV').textContent=cfg.screenshot_delay+'ms';
+    }
+    if(cfg.cooldown){
+      document.getElementById('cd').value=cfg.cooldown;
+      document.getElementById('cdV').textContent=cfg.cooldown+'s';
+    }
     document.getElementById('dbg').checked=cfg.debug_log==='1';
 
+    /* Status */
     var stLine=(parts[1]||'').trim();
     if(stLine.indexOf('R:')===0){
       setSt('run',stLine.substring(2));
-      document.getElementById('toggleBtn').textContent='Disable';
-      document.getElementById('toggleBtn').className='btn b-sec b-red';
     }else{
       setSt('stop','');
-      document.getElementById('toggleBtn').textContent='Enable';
-      document.getElementById('toggleBtn').className='btn b-sec';
       if(cfg.enabled!=='0') startDaemon();
     }
-    setInterval(checkSt,10000);
+    startStatusLoop();
   }).catch(function(){
     setSt('stop','');
     startDaemon();
-    setInterval(checkSt,10000);
+    startStatusLoop();
   });
 }
 

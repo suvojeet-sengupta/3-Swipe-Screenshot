@@ -1,7 +1,7 @@
 id=three_swipe_screenshot
 name=3-Finger Swipe Screenshot
-version=v2.7.0
-versionCode=270
+version=v2.8.0
+versionCode=280
 author=Suvojeet Sengupta
 description=3-finger swipe gesture triggers native system screenshot (same as Power+VolumeDown). Magisk & KernelSU. Android 11-16+.
 updateJson=
