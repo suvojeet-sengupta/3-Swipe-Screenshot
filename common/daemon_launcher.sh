@@ -11,6 +11,8 @@ LOG_FILE="$DATA_DIR/daemon.log"
 DAEMON="/data/adb/modules/three_swipe_screenshot/common/3swipe_daemon.sh"
 
 ACTION="${1:-restart}"
+DAEMON_DIR="$(dirname "$DAEMON")"
+MODULE_DIR="$(dirname "$DAEMON_DIR")"
 
 mkdir -p "$DATA_DIR"
 
@@ -49,18 +51,22 @@ echo "[$(date '+%m-%d %H:%M:%S')] Launcher: starting daemon..." >> "$LOG_FILE"
 # Method: use daemonize via sh -c with double-fork
 (sh "$DAEMON" >> "$LOG_FILE" 2>&1 &) &
 
-# Wait a moment and verify
-sleep 2
-
-if [ -f "$PID_FILE" ]; then
-  pid=$(cat "$PID_FILE")
-  if kill -0 "$pid" 2>/dev/null; then
-    echo "[$(date '+%m-%d %H:%M:%S')] Launcher: daemon confirmed running (PID $pid)" >> "$LOG_FILE"
-    echo "running:$pid"
-    exit 0
+# Wait up to 10 seconds for daemon to write its PID
+# (it may take several seconds to find the touch device)
+wait_count=0
+while [ $wait_count -lt 20 ]; do
+  sleep 0.5
+  if [ -f "$PID_FILE" ]; then
+    pid=$(cat "$PID_FILE" 2>/dev/null)
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+      echo "[$(date '+%m-%d %H:%M:%S')] Launcher: daemon confirmed running (PID $pid)" >> "$LOG_FILE"
+      echo "running:$pid"
+      exit 0
+    fi
   fi
-fi
+  wait_count=$((wait_count + 1))
+done
 
-echo "[$(date '+%m-%d %H:%M:%S')] Launcher: WARNING daemon may not have started" >> "$LOG_FILE"
-echo "failed"
-exit 1
+echo "[$(date '+%m-%d %H:%M:%S')] Launcher: WARNING daemon may not have started after 10s" >> "$LOG_FILE"
+echo "pending"
+exit 0

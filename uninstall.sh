@@ -16,6 +16,16 @@ if [ -f "$PID_FILE" ]; then
   fi
 fi
 
+# Stop watchdog
+WD_PID="$DATA_DIR/watchdog.pid"
+if [ -f "$WD_PID" ]; then
+  wdpid=$(cat "$WD_PID" 2>/dev/null)
+  if [ -n "$wdpid" ]; then
+    kill "$wdpid" 2>/dev/null
+    kill -9 "$wdpid" 2>/dev/null
+  fi
+fi
+
 # Clean up data directory
 rm -rf "$DATA_DIR" 2>/dev/null
 

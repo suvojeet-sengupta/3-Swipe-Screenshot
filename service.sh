@@ -49,9 +49,17 @@ fi
 sh "$MODULE_DIR/common/daemon_launcher.sh" restart
 
 # Watchdog: ensure daemon stays alive and auto-restart if it dies
+# Track watchdog PID so it can be killed on module update/removal
 (
+  echo $$ > "$DATA_DIR/watchdog.pid"
   while true; do
     sleep 60
+    # Exit if module was removed or disabled
+    if [ ! -d "$MODULE_DIR" ] || [ -f "$MODULE_DIR/disable" ]; then
+      echo "[$(date '+%m-%d %H:%M:%S')] Watchdog: module disabled/removed, exiting" >> "$DATA_DIR/daemon.log"
+      rm -f "$DATA_DIR/watchdog.pid"
+      exit 0
+    fi
     if [ -f "$DATA_DIR/daemon.pid" ]; then
       wpid=$(cat "$DATA_DIR/daemon.pid" 2>/dev/null)
       if [ -n "$wpid" ] && ! kill -0 "$wpid" 2>/dev/null; then

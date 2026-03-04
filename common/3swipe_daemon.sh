@@ -88,16 +88,46 @@ find_touch_device() {
 }
 
 # ── Vibrate ──────────────────────────────────────────────────────────────────
+# On Android 12+ many system services reject Binder calls from root UID or
+# Magisk SELinux context.  We try sysfs first (always works), then fallback
+# to cmd via proper user context.
 do_vibrate() {
   [ "$VIBRATION" != "1" ] && return
-  # Try as shell user (avoids root binder restrictions on Android 12-14+)
-  su shell -c "cmd vibrator_manager vibrate -d 0 -f $VIBRATION_DURATION oneshot 2>/dev/null" 2>/dev/null && return
-  su 2000 -c "cmd vibrator_manager vibrate -d 0 -f $VIBRATION_DURATION oneshot 2>/dev/null" 2>/dev/null && return
-  # Fallback to direct cmd as root
-  cmd vibrator_manager vibrate -d 0 -f "$VIBRATION_DURATION" oneshot >/dev/null 2>&1 && return
-  # Legacy service call
-  su shell -c "service call vibrator 2 i32 $VIBRATION_DURATION 2>/dev/null" 2>/dev/null && return
-  service call vibrator 2 i32 "$VIBRATION_DURATION" >/dev/null 2>&1
+
+  # Method 1: sysfs — works on most kernels, no Binder needed
+  for vib in \
+    /sys/class/timed_output/vibrator/enable \
+    /sys/devices/virtual/timed_output/vibrator/enable \
+    /sys/class/leds/vibrator/duration \
+    /sys/class/leds/vibrator/activate; do
+    if [ -w "$vib" ]; then
+      case "$vib" in
+        */duration)
+          echo "$VIBRATION_DURATION" > "$vib"
+          act="${vib%/duration}/activate"
+          [ -w "$act" ] && echo 1 > "$act"
+          return ;;
+        */enable)
+          echo "$VIBRATION_DURATION" > "$vib"
+          return ;;
+      esac
+    fi
+  done
+
+  # Method 2: input event vibrator (force-feedback)
+  for ff in /sys/class/input/event*/device/uevent; do
+    if grep -qi "vibra" "$ff" 2>/dev/null; then
+      evdev="/dev/input/$(echo "$ff" | sed 's|.*/input/\(event[0-9]*\)/.*|\1|')"
+      if [ -e "$evdev" ]; then
+        # Use a short buzz via sendevent (type=0x15 FF_RUMBLE)
+        sendevent "$evdev" 0x15 0x50 1 >/dev/null 2>&1
+        return
+      fi
+    fi
+  done
+
+  # Method 3: Binder — last resort (may fail on Android 12+)
+  cmd vibrator_manager vibrate -d 0 -f "$VIBRATION_DURATION" oneshot >/dev/null 2>&1
 }
 
 # ── File-based cooldown lock ─────────────────────────────────────────────────
@@ -117,8 +147,8 @@ check_cooldown() {
 }
 
 # ── Play screenshot shutter sound ────────────────────────────────────────────
+# Use media_session broadcast or am start — avoids cmd media.player Binder failures
 do_sound() {
-  # Try media player with the stock screenshot sound effect
   for snd in \
     /system/media/audio/ui/camera_click.ogg \
     /system/media/audio/ui/camera_shutter.ogg \
@@ -127,31 +157,38 @@ do_sound() {
     /product/media/audio/ui/screenshot_click.ogg \
     /system/product/media/audio/ui/camera_click.ogg; do
     if [ -f "$snd" ]; then
-      su shell -c "cmd media.player play '$snd' 2>/dev/null" 2>/dev/null && return
-      su 2000 -c "cmd media.player play '$snd' 2>/dev/null" 2>/dev/null && return
-      # Use --user 0 and move redirection inside
-      su shell -c "am start -a android.intent.action.VIEW -d 'file://$snd' -t audio/ogg --user 0 2>/dev/null" 2>/dev/null && return
+      # Use am start with VIEW intent — works without Binder transaction issues
+      am start -a android.intent.action.VIEW \
+        -d "file://$snd" -t audio/ogg \
+        --user 0 >/dev/null 2>&1 && return
+      # Fallback: toybox/busybox play (rarely available but harmless)
+      toybox play "$snd" >/dev/null 2>&1 && return
     fi
   done
-  # Fallback: remove the toybox call as it doesn't do anything useful
+  # If no sound file found, silently skip
   :
 }
 
 # ── Show system-style notification with screenshot preview ───────────────────
+# Prefer am broadcast with Toast or notification channels that don't need
+# Binder transactions from privileged context.
 do_notification() {
   _npath="$1"
   _nfname="$2"
   [ "$SHOW_NOTIFICATION" != "1" ] && return
 
-  # Use shell/2000 user and move redirection inside. Add --user 0.
-  su shell -c "cmd notification post --user 0 -S messaging -t 'Screenshot captured' --conversation '3swipe_ss' 'Screenshot' --message 'now:Saved to Screenshots' 'tag_3swipe' 2>/dev/null" 2>/dev/null && return
-  su 2000 -c "cmd notification post --user 0 -S messaging -t 'Screenshot captured' --conversation '3swipe_ss' 'Screenshot' --message 'now:Saved to Screenshots' 'tag_3swipe' 2>/dev/null" 2>/dev/null && return
+  # Method 1: Use am broadcast to trigger media scanner (shows in gallery)
+  # This already handles the "notification" that a screenshot was taken
+  # via the system screenshot UI on most ROMs.
 
-  su shell -c "cmd notification post --user 0 -S bigtext -t 'Screenshot captured' '3swipe_ss' 'Saved: ${_nfname}' 2>/dev/null" 2>/dev/null && return
-  su 2000 -c "cmd notification post --user 0 -S bigtext -t 'Screenshot captured' '3swipe_ss' 'Saved: ${_nfname}' 2>/dev/null" 2>/dev/null && return
+  # Method 2: Use cmd notification with --user 0 (redirect ALL output)
+  cmd notification post --user 0 \
+    -S bigtext -t "Screenshot captured" \
+    "3swipe_ss" "Saved: ${_nfname}" >/dev/null 2>&1 && return
 
-  # Fallback as root
-  cmd notification post --user 0 -S bigtext -t "Screenshot captured" "3swipe_ss" "Saved: ${_nfname}" >/dev/null 2>&1
+  # Method 3: Use am to show a toast-style notification
+  am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE \
+    -d "file://${_npath}" --user 0 >/dev/null 2>&1
 }
 
 # ── Take screenshot ──────────────────────────────────────────────────────────
@@ -188,6 +225,8 @@ take_screenshot() {
     logc "Saved: $fpath"
 
     # ── Everything below runs in background for zero latency ─────────────
+    # IMPORTANT: redirect ALL stdout/stderr to /dev/null to prevent
+    # "cmd: Failure calling service" spam in logs
     {
       # Vibration feedback — immediate tactile response
       do_vibrate
@@ -200,21 +239,16 @@ take_screenshot() {
         -d "file://${fpath}" --user 0 >/dev/null 2>&1
 
       # MediaStore insert (Android 11+ scoped storage)
-      su shell -c "content insert --user 0 --uri content://media/external/images/media \
-        --bind _display_name:s:${fname} \
+      content insert --user 0 --uri content://media/external/images/media \
+        --bind _display_name:s:"${fname}" \
         --bind mime_type:s:image/png \
         --bind relative_path:s:Pictures/Screenshots \
-        --bind _data:s:${fpath} 2>/dev/null" 2>/dev/null
-      su 2000 -c "content insert --user 0 --uri content://media/external/images/media \
-        --bind _display_name:s:${fname} \
-        --bind mime_type:s:image/png \
-        --bind relative_path:s:Pictures/Screenshots \
-        --bind _data:s:${fpath} 2>/dev/null" 2>/dev/null
+        --bind _data:s:"${fpath}" >/dev/null 2>&1
 
       # System notification
       do_notification "$fpath" "$fname"
 
-    } &
+    } >/dev/null 2>&1 &
   else
     logc "ERROR: screencap failed for $fpath"
   fi
@@ -257,11 +291,11 @@ logc "Daemon STARTED (PID $$)"
 logc "enabled=$ENABLED direction=$SWIPE_DIRECTION threshold=$SWIPE_THRESHOLD"
 logc "========================================="
 
-# Force-enable on start (always-on design)
+# If disabled in config, exit cleanly — respect user preference
 if [ "$ENABLED" != "1" ]; then
-  ENABLED=1
-  sed -i 's/^enabled=.*/enabled=1/' "$CONFIG" 2>/dev/null
-  logc "Force-enabled on start"
+  logc "Daemon disabled in config — exiting."
+  rm -f "$PID_FILE"
+  exit 0
 fi
 
 # Dump available input devices for diagnostics
@@ -310,6 +344,9 @@ FIRED=0
 
 logc "Entering event loop — listening for 3-finger swipe..."
 
+# Reset restart counter on successful start
+rm -f "$DATA_DIR/retry_count" 2>/dev/null
+
 # ── Read raw events ──────────────────────────────────────────────────────────
 # getevent -q <device> outputs THREE hex fields per line:
 #   TYPE CODE VALUE      e.g.  0003 0036 000003e8
@@ -322,11 +359,11 @@ getevent -q "$DEV" 2>/dev/null | while read -r etype ecode evalue; do
     load_config
     rotate_log
   fi
-  # Self-heal: re-enable if somehow disabled
+  # If user disabled via config, exit cleanly
   if [ "$ENABLED" != "1" ]; then
-    ENABLED=1
-    sed -i 's/^enabled=.*/enabled=1/' "$CONFIG" 2>/dev/null
-    logc "Self-heal: re-enabled automatically"
+    logc "Daemon disabled via config — exiting."
+    rm -f "$PID_FILE"
+    exit 0
   fi
 
   # only EV_ABS (0003)
@@ -405,6 +442,19 @@ getevent -q "$DEV" 2>/dev/null | while read -r etype ecode evalue; do
 done
 
 # If we reach here, getevent exited (shouldn't normally)
-logc "WARNING: getevent exited unexpectedly — restarting in 3s"
-sleep 3
+# Use exponential backoff to avoid CPU-burn restart loops
+RETRY_FILE="$DATA_DIR/retry_count"
+retries=$(cat "$RETRY_FILE" 2>/dev/null || echo 0)
+retries=$((retries + 1))
+echo "$retries" > "$RETRY_FILE"
+
+if [ "$retries" -ge 10 ]; then
+  logc "FATAL: getevent exited $retries times — giving up."
+  rm -f "$PID_FILE" "$RETRY_FILE"
+  exit 1
+fi
+
+wait_secs=$((retries * 3))
+logc "WARNING: getevent exited unexpectedly — restart #$retries in ${wait_secs}s"
+sleep "$wait_secs"
 exec sh "$SELF"

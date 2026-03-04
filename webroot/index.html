@@ -204,6 +204,7 @@ input[type=range]::-webkit-slider-thumb{
 <div class="btns">
   <button class="btn b-pri" onclick="doRestart()">Restart Daemon</button>
   <button class="btn b-sec" onclick="doTest()">Test Screenshot</button>
+  <button class="btn b-sec b-red" id="toggleBtn" onclick="doToggle()">Disable</button>
 </div>
 
 <div class="sec">
@@ -321,7 +322,14 @@ function doRestart(){
 }
 
 function doTest(){
-  var ts=new Date().toISOString().replace(/[-:T.Z]/g,'').substring(0,14);
+  // Use local time to match daemon-produced filenames
+  var now=new Date();
+  var ts=now.getFullYear()
+    +String(now.getMonth()+1).padStart(2,'0')
+    +String(now.getDate()).padStart(2,'0')+'_'
+    +String(now.getHours()).padStart(2,'0')
+    +String(now.getMinutes()).padStart(2,'0')
+    +String(now.getSeconds()).padStart(2,'0');
   var f='/sdcard/Pictures/Screenshots/Screenshot_'+ts+'.png';
   exec(
     'mkdir -p /sdcard/Pictures/Screenshots; '+
@@ -329,6 +337,35 @@ function doTest(){
     'chmod 0644 "'+f+'"; '+
     'am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://'+f+'" --user 0 >/dev/null 2>&1'
   ).then(function(r){toast(r.code?'Failed':'Screenshot saved')});
+}
+
+function doToggle(){
+  checkSt().then(function(running){
+    if(running){
+      // Disable: set enabled=0 and stop daemon
+      save('enabled','0').then(function(){
+        return exec('sh "'+LNCH+'" stop');
+      }).then(function(){
+        toast('Daemon disabled');
+        setSt('stop','');
+        document.getElementById('toggleBtn').textContent='Enable';
+        document.getElementById('toggleBtn').className='btn b-sec';
+      });
+    }else{
+      // Enable: set enabled=1 and start daemon
+      save('enabled','1').then(function(){
+        return exec('sh "'+LNCH+'" restart');
+      }).then(function(){
+        toast('Daemon enabled');
+        setTimeout(function(){
+          checkSt().then(function(){
+            document.getElementById('toggleBtn').textContent='Disable';
+            document.getElementById('toggleBtn').className='btn b-sec b-red';
+          });
+        },3000);
+      });
+    }
+  });
 }
 
 function viewLogs(){
@@ -370,9 +407,13 @@ function init(){
     var stLine=(parts[1]||'').trim();
     if(stLine.indexOf('R:')===0){
       setSt('run',stLine.substring(2));
+      document.getElementById('toggleBtn').textContent='Disable';
+      document.getElementById('toggleBtn').className='btn b-sec b-red';
     }else{
       setSt('stop','');
-      startDaemon();
+      document.getElementById('toggleBtn').textContent='Enable';
+      document.getElementById('toggleBtn').className='btn b-sec';
+      if(cfg.enabled!=='0') startDaemon();
     }
     setInterval(checkSt,10000);
   }).catch(function(){
